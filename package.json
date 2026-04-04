@@ -1,0 +1,15 @@
+{
+  "name": "worldoffolks2",
+  "version": "2.0.0",
+  "description": "WorldOfFolks 2 — a narrative simulation where you build the cast, then step inside the story.",
+  "scripts": {
+    "create": "node create-characters.js",
+    "start": "node server/index.js",
+    "launch": "node launch.js",
+    "play": "node cli/player.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "ws": "^8.18.0"
+  }
+}

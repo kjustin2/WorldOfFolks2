@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WorldOfFolks 2</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>WorldOfFolks 2</h1>
+    <div id="status-bar">
+      <span id="agent-count">0 characters</span>
+      <span id="connection-status" class="disconnected">⚫ connecting...</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left column: map + characters -->
+    <section id="left-col">
+      <div id="map-panel">
+        <h2>Town Map</h2>
+        <div id="location-grid"></div>
+      </div>
+
+      <div id="characters-panel">
+        <h2>Characters</h2>
+        <div id="character-list"></div>
+      </div>
+    </section>
+
+    <!-- Right column: event feed -->
+    <section id="right-col">
+      <div id="feed-panel">
+        <h2>Events <button id="clear-feed" title="Clear feed">✕</button></h2>
+        <div id="event-feed"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

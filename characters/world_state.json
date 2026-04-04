@@ -1,0 +1,13 @@
+{
+  "agents": {},
+  "eventLog": [],
+  "messages": {
+    "square": [],
+    "tavern": [],
+    "market": [],
+    "park": [],
+    "blacksmith": [],
+    "library": [],
+    "docks": []
+  }
+}

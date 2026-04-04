@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(node -e \"const {World} = require\\('./server/world'\\); const w = new World\\(\\); console.log\\('World OK:', Object.keys\\(w\\).join\\(', '\\)\\)\")",
+      "Bash(timeout 5 node -e ':*)",
+      "Bash(node server/index.js)",
+      "Bash(curl -s -X POST http://localhost:3000/api/register -H \"Content-Type: application/json\" -d \"{\\\\\"name\\\\\":\\\\\"Ruth\\\\\",\\\\\"role\\\\\":\\\\\"tavern keeper\\\\\"}\")",
+      "Bash(node -e \"process.stdin.resume\\(\\); let d=''; process.stdin.on\\('data',c=>d+=c\\); process.stdin.on\\('end',\\(\\)=>{ const r=JSON.parse\\(d\\); console.log\\('register:', r.success, '| id:', r.agent && r.agent.id\\); }\\)\")",
+      "Bash(curl -s -X POST http://localhost:3000/api/register -H \"Content-Type: application/json\" -d \"{\\\\\"name\\\\\":\\\\\"Thomas\\\\\",\\\\\"role\\\\\":\\\\\"blacksmith\\\\\"}\")",
+      "Bash(node -e \"process.stdin.resume\\(\\); let d=''; process.stdin.on\\('data',c=>d+=c\\); process.stdin.on\\('end',\\(\\)=>{ const r=JSON.parse\\(d\\); console.log\\('speak:', r.success, '| context msgs:', r.conversationContext && r.conversationContext.messages.length\\); }\\)\")",
+      "Bash(curl -s http://localhost:3000/api/world)",
+      "Bash(node -e \"process.stdin.resume\\(\\); let d=''; process.stdin.on\\('data',c=>d+=c\\); process.stdin.on\\('end',\\(\\)=>{ const s=JSON.parse\\(d\\); console.log\\('agents:', Object.keys\\(s.agents\\).length, '| events:', s.eventLog.length\\); }\\)\" kill %1 echo \"Server test done.\")",
+      "Bash(node -e ':*)",
+      "Bash(node cli/town.js --help)",
+      "Bash(curl -s -X POST http://localhost:3000/api/register -H 'Content-Type: application/json' -d '{\"name\":\"Ruth\",\"role\":\"tavern keeper\"}')",
+      "Bash(node -e \"process.stdin.resume\\(\\);let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const s=JSON.parse\\(d\\);console.log\\('Active agents after reset:', Object.values\\(s.agents\\).filter\\(a=>a.active\\).map\\(a=>a.name\\).join\\(','\\)\\);}\\)\" kill %1 echo \"All tests passed.\")"
+    ]
+  }
+}

@@ -1,0 +1,354 @@
+/* WorldOfFolks 2 — Dashboard Styles */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0f1117;
+  --bg2:       #161b22;
+  --bg3:       #1c2230;
+  --border:    #2d3748;
+  --text:      #e2e8f0;
+  --text-dim:  #718096;
+  --cyan:      #63b3ed;
+  --green:     #68d391;
+  --yellow:    #f6e05e;
+  --red:       #fc8181;
+  --magenta:   #b794f4;
+  --orange:    #f6ad55;
+  --radius:    8px;
+  --gap:       12px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── Header ────────────────────────────────────────────────────────────────── */
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+header h1 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--cyan);
+  letter-spacing: 0.03em;
+}
+
+#status-bar {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+#connection-status.connected    { color: var(--green); }
+#connection-status.disconnected { color: var(--red); }
+
+/* ── Layout ────────────────────────────────────────────────────────────────── */
+
+main {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: var(--gap);
+  padding: var(--gap);
+  height: calc(100vh - 49px);
+  overflow: hidden;
+}
+
+#left-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  overflow-y: auto;
+}
+
+#right-col {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Panels ────────────────────────────────────────────────────────────────── */
+
+.panel, #map-panel, #characters-panel, #feed-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+#map-panel, #characters-panel, #feed-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+#feed-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+h2 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ── Map ───────────────────────────────────────────────────────────────────── */
+
+#location-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 12px;
+}
+
+.location-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  cursor: default;
+  transition: border-color 0.2s;
+}
+
+.location-card.has-people {
+  border-color: var(--cyan);
+}
+
+.location-card .loc-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.location-card .loc-emoji { font-size: 1.3rem; }
+
+.location-card .loc-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.location-card .loc-people {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 20px;
+}
+
+.person-dot {
+  font-size: 0.7rem;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.person-dot.is-player {
+  background: rgba(99,179,237,0.15);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+/* ── Characters ────────────────────────────────────────────────────────────── */
+
+#character-list {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.character-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.character-card.is-player {
+  border-color: var(--cyan);
+}
+
+.char-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.char-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.char-name.is-player { color: var(--cyan); }
+
+.char-role {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.char-location {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.char-last-said {
+  font-size: 0.82rem;
+  color: var(--text);
+  font-style: italic;
+  border-left: 2px solid var(--border);
+  padding-left: 8px;
+  margin-top: 4px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* ── Event Feed ────────────────────────────────────────────────────────────── */
+
+#event-feed {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.feed-entry {
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 0.83rem;
+  line-height: 1.4;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.feed-entry.speak {
+  background: rgba(99,179,237,0.08);
+  border-left: 3px solid var(--cyan);
+}
+
+.feed-entry.shout {
+  background: rgba(246,224,94,0.08);
+  border-left: 3px solid var(--yellow);
+}
+
+.feed-entry.move {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+
+.feed-entry.join {
+  color: var(--green);
+  font-size: 0.78rem;
+}
+
+.feed-entry.leave {
+  color: var(--red);
+  font-size: 0.78rem;
+}
+
+.feed-entry.reset {
+  color: var(--orange);
+  font-size: 0.78rem;
+}
+
+.feed-entry.think {
+  color: var(--magenta);
+  font-size: 0.78rem;
+  font-style: italic;
+}
+
+.feed-entry.whisper {
+  color: var(--magenta);
+  font-size: 0.78rem;
+}
+
+.feed-entry .speaker {
+  font-weight: 700;
+  color: var(--cyan);
+}
+
+.feed-entry.shout .speaker { color: var(--yellow); }
+.feed-entry.think .speaker { color: var(--magenta); }
+
+.feed-entry .ts {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  margin-right: 6px;
+}
+
+/* ── Clear button ──────────────────────────────────────────────────────────── */
+
+#clear-feed {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+#clear-feed:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  main {
+    grid-template-columns: 1fr;
+    height: auto;
+    overflow: auto;
+  }
+  #right-col { height: 400px; }
+}
