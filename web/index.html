@@ -7,36 +7,97 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>WorldOfFolks 2</h1>
-    <div id="status-bar">
-      <span id="agent-count">0 characters</span>
-      <span id="connection-status" class="disconnected">⚫ connecting...</span>
+
+  <!-- ── Setup Overlay (character creation + launch) ────────────────────────── -->
+  <div id="setup-overlay" class="hidden">
+    <div id="setup-modal">
+      <div id="setup-header">
+        <div class="setup-logo">WorldOfFolks 2</div>
+        <div id="setup-step-label"></div>
+      </div>
+      <div id="setup-body"></div>
     </div>
-  </header>
+  </div>
 
-  <main>
-    <!-- Left column: map + characters -->
-    <section id="left-col">
-      <div id="map-panel">
-        <h2>Town Map</h2>
-        <div id="location-grid"></div>
-      </div>
+  <!-- ── Game UI ──────────────────────────────────────────────────────────────── -->
+  <div id="game-ui">
 
-      <div id="characters-panel">
-        <h2>Characters</h2>
-        <div id="character-list"></div>
+    <header>
+      <div class="hdr-left">
+        <span class="game-title">WorldOfFolks 2</span>
+        <span id="agent-count">0 characters</span>
+        <span id="connection-status" class="disconnected">⚫ connecting...</span>
       </div>
-    </section>
+      <div class="hdr-right">
+        <span id="player-badge" class="hidden"></span>
+        <button class="hdr-btn" id="btn-observe" style="display:none">Observer Mode</button>
+        <button class="hdr-btn danger" id="btn-new-game">New Game</button>
+      </div>
+    </header>
 
-    <!-- Right column: event feed -->
-    <section id="right-col">
-      <div id="feed-panel">
-        <h2>Events <button id="clear-feed" title="Clear feed">✕</button></h2>
-        <div id="event-feed"></div>
-      </div>
-    </section>
-  </main>
+    <main>
+
+      <!-- Left: map + characters -->
+      <section id="left-col">
+        <div class="panel" id="map-panel">
+          <div class="panel-title">Town Map
+            <span class="panel-hint" id="map-hint"></span>
+          </div>
+          <div id="location-grid"></div>
+        </div>
+        <div class="panel" id="characters-panel">
+          <div class="panel-title">Characters</div>
+          <div id="character-list"></div>
+        </div>
+      </section>
+
+      <!-- Right: conversation feed + player controls -->
+      <section id="right-col">
+
+        <div class="panel" id="feed-panel">
+          <div class="panel-title">
+            Conversations
+            <button id="clear-feed" title="Clear feed">✕</button>
+          </div>
+          <div id="event-feed"></div>
+        </div>
+
+        <!-- Player panel — shown only when playing -->
+        <div id="player-panel" class="hidden">
+          <div id="player-status-bar">
+            <span id="player-who"></span>
+            <span id="player-where"></span>
+          </div>
+
+          <div id="player-notification" class="hidden"></div>
+
+          <div class="player-row" id="say-row">
+            <input id="say-input" type="text" placeholder="Say something to everyone here…" autocomplete="off">
+            <button id="say-btn" class="action-send-btn">Say</button>
+          </div>
+
+          <div class="player-row" id="whisper-row">
+            <select id="whisper-target">
+              <option value="">Whisper to…</option>
+            </select>
+            <input id="whisper-input" type="text" placeholder="Private message…" autocomplete="off">
+            <button id="whisper-btn" class="action-send-btn">Whisper</button>
+          </div>
+
+          <div class="player-row" id="move-row">
+            <span class="move-label">Move to:</span>
+            <div id="move-btns"></div>
+          </div>
+
+          <div class="player-row" id="extra-actions-row">
+            <button id="look-btn" class="extra-btn">👁 Look around</button>
+            <button id="btn-stop-playing" class="extra-btn danger-soft">Stop Playing</button>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
 
   <script src="app.js"></script>
 </body>

@@ -71,14 +71,14 @@ function ask(question) {
 function askMultiline(prompt) {
   return new Promise(resolve => {
     console.log(`${yellow('>')} ${prompt}`);
-    console.log(dim('  (Type your description. Press Enter twice when done.)'));
+    console.log(dim('  (Type your description. Press Enter on a blank line when done.)'));
     let lines = [];
     let blankCount = 0;
 
     const onLine = (line) => {
       if (line === '') {
         blankCount++;
-        if (blankCount >= 2) {
+        if (blankCount >= 1) {
           rl.removeListener('line', onLine);
           resolve(lines.join('\n').trim());
           return;
@@ -240,30 +240,33 @@ async function main() {
   printBanner();
 
   // Check if characters already exist
-  const existing = loadAllProfiles();
-  if (existing.length > 0) {
-    console.log(`${yellow('Characters already exist:')}`);
-    existing.forEach((p, i) => printProfile(p, i));
+  // In managed mode (launched via game.js) this menu is handled by the launcher.
+  if (!process.env.MANAGED) {
+    const existing = loadAllProfiles();
+    if (existing.length > 0) {
+      console.log(`${yellow('Characters already exist:')}`);
+      existing.forEach((p, i) => printProfile(p, i));
 
-    console.log('');
-    const action = await ask(
-      `What would you like to do?\n  ${cyan('1.')} Add more characters\n  ${cyan('2.')} Reset all characters and start over\n  ${cyan('3.')} Exit\n\n  Choice:`
-    );
+      console.log('');
+      const action = await ask(
+        `What would you like to do?\n  ${cyan('1.')} Add more characters\n  ${cyan('2.')} Reset all characters and start over\n  ${cyan('3.')} Exit\n\n  Choice:`
+      );
 
-    if (action === '2') {
-      const confirm = await ask(red('This will delete all existing characters. Are you sure? (yes/no)'));
-      if (confirm.toLowerCase() !== 'yes') {
-        console.log('Cancelled.'); rl.close(); return;
+      if (action === '2') {
+        const confirm = await ask(red('This will delete all existing characters. Are you sure? (yes/no)'));
+        if (confirm.toLowerCase() !== 'yes') {
+          console.log('Cancelled.'); rl.close(); return;
+        }
+        // Delete all character files
+        const files = fs.readdirSync(CHARACTERS_DIR).filter(f => f.endsWith('.json') && f !== 'world_state.json');
+        files.forEach(f => fs.unlinkSync(path.join(CHARACTERS_DIR, f)));
+        console.log(green('All characters deleted.'));
+        existing.length = 0;
+      } else if (action === '3') {
+        rl.close(); return;
       }
-      // Delete all character files
-      const files = fs.readdirSync(CHARACTERS_DIR).filter(f => f.endsWith('.json') && f !== 'world_state.json');
-      files.forEach(f => fs.unlinkSync(path.join(CHARACTERS_DIR, f)));
-      console.log(green('All characters deleted.'));
-      existing.length = 0;
-    } else if (action === '3') {
-      rl.close(); return;
+      // action === '1' falls through to creation below
     }
-    // action === '1' falls through to creation below
   }
 
   const currentCount = loadAllProfiles().length;
@@ -319,16 +322,18 @@ async function main() {
     console.log(`  ${cyan((i+1) + '.')} ${bold(p.name)} — ${p.role}${tag}`);
   });
 
-  const playerChar = allProfiles.find(p => p.isPlayer);
-  console.log(`\n${bold('Next steps:')}`);
-  console.log(`  ${cyan('1.')} Start the server:  ${bold('npm start')}`);
-  console.log(`  ${cyan('2.')} Launch AI agents:  ${bold('npm run launch')}`);
-  if (playerChar) {
-    console.log(`  ${cyan('3.')} Play as ${playerChar.name}:     ${bold('npm run play')}`);
-  } else {
-    console.log(`  ${cyan('3.')} Open the dashboard: ${bold('http://localhost:3000')}`);
+  if (!process.env.MANAGED) {
+    const playerChar = allProfiles.find(p => p.isPlayer);
+    console.log(`\n${bold('Next steps:')}`);
+    console.log(`  ${cyan('1.')} Start the server:  ${bold('npm start')}`);
+    console.log(`  ${cyan('2.')} Launch AI agents:  ${bold('npm run launch')}`);
+    if (playerChar) {
+      console.log(`  ${cyan('3.')} Play as ${playerChar.name}:     ${bold('npm run play')}`);
+    } else {
+      console.log(`  ${cyan('3.')} Open the dashboard: ${bold('http://localhost:3000')}`);
+    }
+    console.log('');
   }
-  console.log('');
 
   rl.close();
 }

@@ -12,6 +12,7 @@ const path  = require('path');
 const BASE_URL       = process.env.TOWN_URL || 'http://localhost:3000';
 const CHARACTERS_DIR = path.join(__dirname, 'characters');
 const PROMPTS_DIR    = path.join(__dirname, 'characters', 'prompts');
+const PIDS_DIR       = path.join(__dirname, 'characters', '.pids');
 const MODEL          = process.env.AGENT_MODEL || 'claude-haiku-4-5-20251001';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -81,11 +82,19 @@ IRON LAW:
 - If "directlyAddressed" is true — respond IMMEDIATELY. No exceptions.
 - Keep speaking for 4–8 exchanges minimum. Don't let conversations die early.
 - After each meaningful exchange, run: node "${cliPath}" remember "<what happened and how you feel>"
+
+STAY PUT:
+- Most actions should be "speak", "think", or "remember" — NOT "move".
+- Wait at least 5–6 actions between moves. A character who hops around can never be talked to.
+- NEVER move while a conversation is active. If someone is talking to you or near you, stay.
+- Only move when: (a) you are alone AND have nothing to think/remember, or (b) you have a specific, in-character reason to go somewhere (e.g. "I need to find Ruth" — then head there and STOP).
+- If "move" returns an error like "someone is waiting to speak with you" — you MUST stay. Do NOT retry the move. Instead "look" or "speak" or "think".
+- After arriving at a new location, run "look", then "speak" or "think" BEFORE you even consider moving again.
 `;
 
   fs.writeFileSync(promptFile, agentPrompt, 'utf8');
 
-  const title      = `WorldOfFolks2 — ${profile.name}`;
+  const title      = `WorldOfFolks2: ${profile.name}`;
   const scriptPath = path.resolve(__filename);
   const isWin      = process.platform === 'win32';
 
@@ -119,6 +128,16 @@ function runAgent(safeId) {
     process.exit(1);
   }
 
+  // Record this process's PID so the server's cleanup can kill the whole tree
+  // (node + the wrapping cmd window + claude CLI) via `taskkill /T /F`.
+  if (!fs.existsSync(PIDS_DIR)) fs.mkdirSync(PIDS_DIR, { recursive: true });
+  const pidFile = path.join(PIDS_DIR, `${safeId}.pid`);
+  try { fs.writeFileSync(pidFile, String(process.pid)); } catch {}
+  const cleanupPid = () => { try { fs.unlinkSync(pidFile); } catch {} };
+  process.on('exit',    cleanupPid);
+  process.on('SIGINT',  () => { cleanupPid(); process.exit(0); });
+  process.on('SIGTERM', () => { cleanupPid(); process.exit(0); });
+
   const prompt = fs.readFileSync(promptFile, 'utf8');
   const isWin  = process.platform === 'win32';
   const cmd    = isWin ? 'cmd' : 'claude';
@@ -126,7 +145,7 @@ function runAgent(safeId) {
     ? ['/c', 'claude', '-p', '--model', MODEL, '--dangerously-skip-permissions']
     : ['-p', '--model', MODEL, '--dangerously-skip-permissions'];
 
-  console.log(`Starting agent: ${safeId} (model: ${MODEL})`);
+  console.log(`Starting agent: ${safeId} (model: ${MODEL}, pid: ${process.pid})`);
 
   const result = spawnSync(cmd, args, {
     input:    prompt,
@@ -139,6 +158,7 @@ function runAgent(safeId) {
     console.error(`Agent error: ${result.error.message}`);
   }
   console.log(`Agent ${safeId} finished (exit ${result.status}).`);
+  cleanupPid();
   process.exit(result.status || 0);
 }
 
@@ -197,14 +217,17 @@ async function main() {
   }
   console.log('\nServer ready.');
 
-  // Spawn each AI agent
+  // Spawn each AI agent. Only a tiny stagger (300ms) so their Claude CLIs
+  // boot in parallel — the wall-clock time is dominated by CLI cold-start,
+  // which is ~30-60s per agent. Serialising them at 2s each made launches
+  // take much longer than necessary.
   for (const profile of aiProfiles) {
     launchAgent(profile);
-    // Stagger launches by 2 seconds so they don't all register simultaneously
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 300));
   }
 
-  console.log(`
+  if (!process.env.MANAGED) {
+    console.log(`
 All agents launched!
 
 To watch what's happening:
@@ -213,6 +236,9 @@ To watch what's happening:
 To play as ${playerProfile ? playerProfile.name : 'a character'}:
   npm run play
 `);
+  } else {
+    console.log(`All ${aiProfiles.length} agent(s) launched.`);
+  }
 }
 
 main().catch(err => {

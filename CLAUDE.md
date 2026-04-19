@@ -18,7 +18,7 @@ WorldOfFolks 2 is a Node.js narrative simulation where players create characters
 | 16 preset characters | 2–8 player-created characters |
 | Observer only | Observer + playable character |
 | 13 locations | 7 locations |
-| 20+ actions | 7 actions (move, speak, shout, approach, leave, think, remember) |
+| 20+ actions | 7 actions (move, speak, shout, whisper, think, remember, look) |
 | Pre-written personality prompts | Prompts generated at runtime from player descriptions |
 | No reset system | `/reset` and `/reset [name]` commands |
 | No clarification flow | Creator asks follow-up questions when descriptions are vague |
@@ -37,17 +37,18 @@ WorldOfFolks 2 is a Node.js narrative simulation where players create characters
 ```
 WorldofFolks2/           (the new game — this repo root)
 ├── CLAUDE.md            (this file)
-├── README.md            (full design plan)
+├── README.md
 ├── package.json
-├── create-characters.js # Interactive character creation CLI
-├── launch.js            # Spawns AI agents from created characters
+├── game.js              # Unified entry point — orchestrates server, creation, agents, player CLI
+├── create-characters.js # Interactive character creation wizard (standalone or called by game.js)
+├── launch.js            # Spawns AI agent terminal windows (standalone or called by game.js)
 ├── server/
 │   ├── world.js         # World simulation (simplified from WoF1)
 │   ├── index.js         # Express + WebSocket server
 │   └── creator.js       # Character description parser + clarification engine
 ├── cli/
 │   ├── town.js          # Agent action CLI (used by AI subprocesses)
-│   └── player.js        # Human player CLI
+│   └── player.js        # Human player CLI (standalone or called by game.js)
 ├── web/
 │   ├── index.html
 │   ├── style.css
@@ -59,18 +60,45 @@ WorldofFolks/            # WoF1 — reference only, do not modify
 ## Running the Game
 
 ```bash
-# Step 1: Create characters (interactive CLI)
-npm run create
-
-# Step 2: Launch AI agents (separate terminal)
-npm run launch
-
-# Step 3: Open dashboard
-# http://localhost:3000
-
-# Or: play as a character
+# Single command — does everything
 npm run play
 ```
+
+`game.js` is intentionally tiny. It:
+1. Checks that the Claude CLI is installed and reachable (`claude --version`)
+2. Requires `server/index.js` inline (starts Express + WebSocket, binds to `PORT`)
+3. Opens the default browser to `http://localhost:PORT` (`start`/`open`/`xdg-open`)
+
+**Everything else — character creation, the continue/add-more/start-over menu,
+picking who to play as, launching AI agents, playing, and reset — happens in the
+browser UI (`web/app.js`).** No interactive terminal menus in `game.js`.
+
+The browser's welcome-back screen (shown when characters exist but no agents are
+running) offers three things:
+- pick any character tile + `Launch the Town →` to start the game
+- `+ Add more characters` to create additional characters before launching
+- `New Game` button in the header to wipe everything and restart the wizard
+
+Shutdown: `server/index.js` registers `SIGINT`/`SIGTERM`/`exit` handlers that call
+`killAgentTerminals()` — on Windows this runs `taskkill /FI "WINDOWTITLE eq WorldOfFolks2: <name>" /T /F`
+for each launched agent window. Pressing Ctrl+C in the `npm run play` terminal
+closes the agent terminals and frees port 3000.
+
+Individual steps can still be run separately for development:
+
+```bash
+npm run create    # Character creation only
+npm start         # Server only
+npm run launch    # AI agents only (server must already be running)
+node cli/player.js  # Player CLI only
+```
+
+### MANAGED env var
+
+When the server spawns `launch.js` via `POST /api/game/launch`, it sets `MANAGED=true`. This
+suppresses the "To watch / npm run play" banner at the end of `launch.js` since the user is
+already in the browser. `create-characters.js` also checks `MANAGED` for its own standalone
+flow (the browser does not spawn it — kept for dev use).
 
 ## Character Creation System (`creator.js`)
 
@@ -210,10 +238,19 @@ CONVERSATION RULES:
 
 | Action | Params | Effect |
 |---|---|---|
+| `look` | — | Return the current location, who is there, and recent speech |
 | `move` | `location` | Change current location |
 | `speak` | `message` | Broadcast to current location |
 | `shout` | `message` | Broadcast to entire town |
-| `approach` | `name` | Initiate direct conversation thread |
-| `leave` | — | End current conversation |
+| `whisper` | `target`, `message` | Private message — only to someone at the same location |
 | `think` | `thought` | Log internal thought (not visible to others) |
 | `remember` | `text` | Write to persistent memory file |
+
+### Whisper rules
+- Target must be `active` and at the **same location** as the sender.
+- Cannot whisper to yourself.
+- The log entry includes the full text: `Alice whispered to Bob: "your secret is safe"`.
+  This is intentional so the dashboard can show the content; whispers are NOT filtered from
+  the event feed. The private-vs-public split is that only the target's `look` surfaces the
+  whisper in the `whispers` array (and the dashboard shows it, since it's a local observer
+  tool, not a multiplayer server).

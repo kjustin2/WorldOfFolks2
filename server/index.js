@@ -1,12 +1,23 @@
 // WorldOfFolks 2 — HTTP + WebSocket Server
 
-const express  = require('express');
-const http     = require('http');
+const express   = require('express');
+const http      = require('http');
 const WebSocket = require('ws');
-const path     = require('path');
+const path      = require('path');
+const fs        = require('fs');
+const { spawn } = require('child_process');
 const { World } = require('./world');
+const {
+  parseDescription,
+  getMissingFields,
+  generateClarifyingQuestions,
+  saveProfile,
+  loadAllProfiles,
+  CHARACTERS_DIR,
+} = require('./creator');
 
 const PORT = process.env.PORT || 3000;
+const ROOT = path.join(__dirname, '..');
 
 const app    = express();
 const server = http.createServer(app);
@@ -16,36 +27,76 @@ const world  = new World();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'web')));
 
-// ─── REST API ─────────────────────────────────────────────────────────────────
+// ─── Broadcast helpers ─────────────────────────────────────────────────────────
+
+function broadcast(msg) {
+  const data = JSON.stringify(msg);
+  for (const client of wss.clients) {
+    if (client.readyState === WebSocket.OPEN) client.send(data);
+  }
+}
+
+// Broadcasts any event log entries added since prevCount
+function broadcastNewEvents(prevCount) {
+  const newEvents = world.eventLog.slice(prevCount);
+  for (const ev of newEvents) {
+    broadcast({ type: 'event', event: ev });
+  }
+}
+
+// ─── Core world API ───────────────────────────────────────────────────────────
 
 app.post('/api/register', (req, res) => {
   const { name, role, isPlayer } = req.body;
   if (!name || !role) return res.json({ success: false, error: 'name and role required' });
+  const prevCount = world.eventLog.length;
   const result = world.register(name, role, !!isPlayer);
-  broadcast({ type: 'event', event: result });
+  broadcastNewEvents(prevCount);
   broadcast({ type: 'state', state: world.getState() });
   res.json(result);
 });
 
-app.post('/api/action', (req, res) => {
+// Actions that only affect the acting agent — we let these through even while
+// the world is paused so AI agents can reflect/look around without stalling.
+const PASSIVE_ACTIONS = new Set(['look', 'status', 'think', 'remember']);
+
+app.post('/api/action', async (req, res) => {
   const { agentId, action, args = {} } = req.body;
   if (!agentId || !action) return res.json({ success: false, error: 'agentId and action required' });
 
+  // If the player is composing a message, pause outgoing AI actions (move,
+  // speak, shout, whisper) by waiting up to 30s for the pause to lift. Keeps
+  // NPCs from moving/talking over the player mid-sentence.
+  if (!PASSIVE_ACTIONS.has(action) && world.isActionBlocked(agentId)) {
+    const deadline = Date.now() + 30_000;
+    while (world.isActionBlocked(agentId) && Date.now() < deadline) {
+      await new Promise(r => setTimeout(r, 500));
+    }
+    if (world.isActionBlocked(agentId)) {
+      return res.json({
+        success: false,
+        paused:  true,
+        error:   'The player is composing a message — stay put and try this again in a moment.',
+      });
+    }
+  }
+
+  const prevCount = world.eventLog.length;
   let result;
   switch (action) {
-    case 'look':    result = world.look(agentId); break;
-    case 'move':    result = world.move(agentId, args.destination); break;
-    case 'speak':   result = world.speak(agentId, args.message); break;
-    case 'shout':   result = world.shout(agentId, args.message); break;
-    case 'whisper': result = world.whisper(agentId, args.target, args.message); break;
-    case 'think':   result = world.think(agentId, args.thought); break;
-    case 'remember':result = world.remember(agentId, args.text); break;
-    case 'status':  result = world.look(agentId); break; // alias
-
+    case 'look':     result = world.look(agentId); break;
+    case 'move':     result = world.move(agentId, args.destination); break;
+    case 'speak':    result = world.speak(agentId, args.message); break;
+    case 'shout':    result = world.shout(agentId, args.message); break;
+    case 'whisper':  result = world.whisper(agentId, args.target, args.message); break;
+    case 'think':    result = world.think(agentId, args.thought); break;
+    case 'remember': result = world.remember(agentId, args.text); break;
+    case 'status':   result = world.look(agentId); break;
     default:
       result = { success: false, error: `Unknown action: ${action}` };
   }
 
+  broadcastNewEvents(prevCount);
   broadcast({ type: 'state', state: world.getState() });
   res.json(result);
 });
@@ -57,49 +108,210 @@ app.get('/api/world', (req, res) => {
 app.post('/api/deregister', (req, res) => {
   const { agentId } = req.body;
   if (!agentId) return res.json({ success: false, error: 'agentId required' });
+  const prevCount = world.eventLog.length;
   const result = world.deregister(agentId);
+  broadcastNewEvents(prevCount);
   broadcast({ type: 'state', state: world.getState() });
+  res.json(result);
+});
+
+// Pause/resume the world while the player is composing a message.
+// Body: { paused: true|false, holderId: <playerId> }
+app.post('/api/pause', (req, res) => {
+  const { paused, holderId } = req.body || {};
+  const result = paused
+    ? world.pause(holderId || null)
+    : world.resume(holderId || null);
+  broadcast({ type: 'pause', paused: !!world.worldPause });
   res.json(result);
 });
 
 app.post('/api/reset', (req, res) => {
   const { agentId } = req.body;
-  let result;
-  if (agentId) {
-    result = world.resetAgent(agentId);
-  } else {
-    result = world.resetAll();
-  }
+  const prevCount = world.eventLog.length;
+  const result = agentId ? world.resetAgent(agentId) : world.resetAll();
+  broadcastNewEvents(prevCount);
   broadcast({ type: 'state', state: world.getState() });
   res.json(result);
 });
 
-// ─── WebSocket ────────────────────────────────────────────────────────────────
+// ─── Setup / Character management API ─────────────────────────────────────────
 
-function broadcast(msg) {
-  const data = JSON.stringify(msg);
-  for (const client of wss.clients) {
-    if (client.readyState === WebSocket.OPEN) client.send(data);
+app.get('/api/setup', (req, res) => {
+  const profiles     = loadAllProfiles();
+  const activeAgents = Object.values(world.agents).filter(a => a.active);
+  res.json({
+    needsSetup:   profiles.length === 0,
+    characters:   profiles.map(p => ({ name: p.name, role: p.role, isPlayer: !!p.isPlayer, traits: p.traits })),
+    agentsRunning: activeAgents.length > 0,
+  });
+});
+
+app.get('/api/characters', (req, res) => {
+  res.json({ success: true, characters: loadAllProfiles() });
+});
+
+// Parse a freeform description → structured profile (calls Claude, takes a few seconds)
+app.post('/api/setup/parse', (req, res) => {
+  const { description, existingProfile } = req.body;
+  if (!description) return res.json({ success: false, error: 'description required' });
+  try {
+    const profile = parseDescription(description, existingProfile || null);
+    const missing = getMissingFields(profile);
+    let questions = [];
+    if (missing.length > 0) {
+      try   { questions = generateClarifyingQuestions(profile, missing); }
+      catch { questions = missing.map(f => `What is this character's ${f}?`); }
+    }
+    res.json({ success: true, profile, missing, questions });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
   }
+});
+
+// Save a character profile to disk
+app.post('/api/setup/save', (req, res) => {
+  const { profile } = req.body;
+  if (!profile || !profile.name) return res.json({ success: false, error: 'profile required' });
+  try {
+    const filepath = saveProfile(profile);
+    res.json({ success: true, filepath });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
+// Delete all character files and reset world
+app.delete('/api/characters', (req, res) => {
+  try {
+    killAgentTerminals();
+    if (fs.existsSync(CHARACTERS_DIR)) {
+      fs.readdirSync(CHARACTERS_DIR)
+        .filter(f => f.endsWith('.json'))
+        .forEach(f => fs.unlinkSync(path.join(CHARACTERS_DIR, f)));
+    }
+    const prevCount = world.eventLog.length;
+    world.resetAll();
+    broadcastNewEvents(prevCount);
+    broadcast({ type: 'state', state: world.getState() });
+    res.json({ success: true });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
+// ─── Agent lifecycle ──────────────────────────────────────────────────────────
+
+let launchedAgentNames = [];
+let agentsLaunched     = false;
+
+function killAgentTerminals() {
+  const PIDS_DIR = path.join(ROOT, 'characters', '.pids');
+  const isWin    = process.platform === 'win32';
+  const { execSync } = require('child_process');
+
+  // 1. Kill by recorded PID (most reliable — takes out the cmd window too via /T).
+  if (fs.existsSync(PIDS_DIR)) {
+    const pidFiles = fs.readdirSync(PIDS_DIR).filter(f => f.endsWith('.pid'));
+    if (pidFiles.length) console.log(`[cleanup] Killing ${pidFiles.length} agent process(es)...`);
+    for (const f of pidFiles) {
+      const full = path.join(PIDS_DIR, f);
+      let pid = null;
+      try { pid = parseInt(fs.readFileSync(full, 'utf8').trim(), 10); } catch {}
+      if (pid) {
+        try {
+          if (isWin) execSync(`taskkill /F /T /PID ${pid}`, { stdio: 'ignore' });
+          else       process.kill(pid, 'SIGTERM');
+        } catch {}
+      }
+      try { fs.unlinkSync(full); } catch {}
+    }
+  }
+
+  // 2. Belt-and-suspenders: try killing any surviving window by title.
+  if (isWin && launchedAgentNames.length) {
+    for (const name of launchedAgentNames) {
+      const title = `WorldOfFolks2: ${name}`;
+      try {
+        execSync(`taskkill /F /FI "WINDOWTITLE eq ${title}" /T`, { stdio: 'ignore', shell: true });
+      } catch {}
+    }
+  }
+
+  launchedAgentNames = [];
+  agentsLaunched     = false;
 }
 
+// Kill terminals when the server process exits (Ctrl-C or taskkill on the server)
+process.on('SIGINT',  () => { killAgentTerminals(); process.exit(0); });
+process.on('SIGTERM', () => { killAgentTerminals(); process.exit(0); });
+process.on('exit',    ()  =>  killAgentTerminals());
+
+app.post('/api/game/launch', (req, res) => {
+  if (agentsLaunched) {
+    return res.json({ success: true, launched: 0, message: 'Agents already running' });
+  }
+
+  const profiles = loadAllProfiles();
+  const aiChars  = profiles.filter(p => !p.isPlayer);
+  if (aiChars.length === 0) {
+    return res.json({ success: true, launched: 0, message: 'No AI characters to launch' });
+  }
+
+  launchedAgentNames = aiChars.map(p => p.name);
+  agentsLaunched     = true;
+
+  const launcher = spawn('node', ['launch.js'], {
+    cwd:   ROOT,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env:   { ...process.env, MANAGED: 'true' },
+  });
+
+  launcher.stdout.on('data', d => process.stdout.write(d));
+  launcher.stderr.on('data', d => process.stderr.write(d));
+  launcher.on('close', code => {
+    if (code !== 0) console.log(`[launcher] exited with code ${code}`);
+  });
+
+  res.json({ success: true, launched: aiChars.length });
+});
+
+app.post('/api/game/stop', (req, res) => {
+  killAgentTerminals();
+  res.json({ success: true });
+});
+
+// ─── WebSocket ────────────────────────────────────────────────────────────────
+
 wss.on('connection', (ws) => {
-  // Send full state on connect
   ws.send(JSON.stringify({ type: 'state', state: world.getState() }));
 });
 
-// Periodic state push every 5s
 setInterval(() => broadcast({ type: 'state', state: world.getState() }), 5000);
+
+// Watch for AI agent processes that died — mark them inactive and tell
+// everybody so the UI can show a disconnect.
+setInterval(() => {
+  const prevCount = world.eventLog.length;
+  const dropped   = world.checkAgentHealth();
+  if (dropped.length) {
+    broadcastNewEvents(prevCount);
+    broadcast({ type: 'state', state: world.getState() });
+  }
+}, 10_000);
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`\nPort ${PORT} is already in use.`);
+    console.error(`  Kill the process:  netstat -ano | findstr :${PORT}  then  taskkill /PID <number> /F`);
+    console.error(`  Or use another port:  PORT=3001 npm run play  →  http://localhost:3001\n`);
+    process.exit(1);
+  }
+  throw err;
+});
+
 server.listen(PORT, () => {
-  console.log(`
-╔═══════════════════════════════════════════╗
-║       WorldOfFolks 2 — Server             ║
-╠═══════════════════════════════════════════╣
-║  Dashboard  →  http://localhost:${PORT}       ║
-║  API        →  http://localhost:${PORT}/api   ║
-╚═══════════════════════════════════════════╝
-`);
+  console.log(`\n  WorldOfFolks 2 — http://localhost:${PORT}\n`);
 });

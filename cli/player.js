@@ -88,13 +88,16 @@ function printLocation(result) {
   if (result.description) console.log(dm(`   ${result.description}`));
 
   const chars = (result.charactersHere || []);
+  const msgs  = (result.recentMessages || []).slice(-5);
+
+  // Atmosphere line — what's going on right now
+  console.log('\n' + buildAtmosphere(chars, msgs.length));
+
   if (chars.length) {
-    console.log(`\n${b('Here:')} ${chars.map(c => `${c.name} ${dm('('+c.role+')')}`).join(', ')}`);
-  } else {
-    console.log(`\n${dm('Nobody else is here.')}`);
+    const list = chars.map(c => `${b(c.name)} ${dm('('+c.role+')')}`).join(', ');
+    console.log(`${b('Here:')} ${list}`);
   }
 
-  const msgs = (result.recentMessages || []).slice(-5);
   if (msgs.length) {
     console.log(`\n${b('Recent:')}`);
     for (const m of msgs) {
@@ -129,6 +132,33 @@ function printSpeech(name, text) {
   } else {
     console.log(`  ${cy(b(name + ':'))} ${text}`);
   }
+}
+
+function buildAtmosphere(chars, recentCount) {
+  if (chars.length === 0) {
+    if (recentCount > 0) {
+      return dm('You are alone now, but the air still feels like someone was just here.');
+    }
+    return dm('You are alone. It is quiet.');
+  }
+
+  const names = chars.map(c => b(c.name));
+  let line;
+  if (chars.length === 1) {
+    line = `${names[0]} is here with you.`;
+  } else if (chars.length === 2) {
+    line = `${names[0]} and ${names[1]} are here.`;
+  } else {
+    const last = names.pop();
+    line = `${names.join(', ')}, and ${last} are here.`;
+  }
+
+  if (recentCount > 1) {
+    line += dm(' Voices have been going back and forth.');
+  } else if (recentCount === 1) {
+    line += dm(' Someone just spoke.');
+  }
+  return line;
 }
 
 function getLocationEmoji(locId) {

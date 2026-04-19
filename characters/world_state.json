@@ -1,13 +1,1849 @@
 {
-  "agents": {},
-  "eventLog": [],
+  "agents": {
+    "justin": {
+      "id": "justin",
+      "name": "Justin",
+      "role": "Mayor",
+      "isPlayer": false,
+      "location": "park",
+      "active": false,
+      "joinedAt": 1776626151439
+    },
+    "korrey": {
+      "id": "korrey",
+      "name": "Korrey",
+      "role": "scholar",
+      "isPlayer": false,
+      "location": "park",
+      "active": true,
+      "joinedAt": 1776626152858
+    },
+    "nick_grunsby": {
+      "id": "nick_grunsby",
+      "name": "Nick Grunsby",
+      "role": "Blacksmith",
+      "isPlayer": false,
+      "location": "park",
+      "active": true,
+      "joinedAt": 1776626155491
+    }
+  },
+  "eventLog": [
+    {
+      "type": "join",
+      "text": "Justin (Mayor) arrived in town",
+      "agentId": "justin",
+      "locationId": "square",
+      "tick": 0,
+      "ts": 1776626151439
+    },
+    {
+      "type": "join",
+      "text": "Korrey (scholar) arrived in town",
+      "agentId": "korrey",
+      "locationId": "square",
+      "tick": 0,
+      "ts": 1776626152858
+    },
+    {
+      "type": "join",
+      "text": "Nick Grunsby (Blacksmith) arrived in town",
+      "agentId": "nick_grunsby",
+      "locationId": "square",
+      "tick": 0,
+      "ts": 1776626155491
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"Korrey, Nick—good to see you both. I've been thinking we need some real change around here.\"",
+      "agentId": "justin",
+      "locationId": "square",
+      "tick": 0,
+      "ts": 1776626164720
+    },
+    {
+      "type": "move",
+      "text": "Korrey moved from Town Square to Library",
+      "agentId": "korrey",
+      "locationId": "library",
+      "tick": 1,
+      "ts": 1776626166503
+    },
+    {
+      "type": "move",
+      "text": "Nick Grunsby moved from Town Square to Blacksmith",
+      "agentId": "nick_grunsby",
+      "locationId": "blacksmith",
+      "tick": 1,
+      "ts": 1776626170685
+    },
+    {
+      "type": "think",
+      "text": "[Korrey thinks]: These old records might have stories nobody's thought about in years. The kind of things worth understanding.",
+      "agentId": "korrey",
+      "locationId": "library",
+      "tick": 1,
+      "ts": 1776626172676
+    },
+    {
+      "type": "think",
+      "text": "[Nick Grunsby thinks]: Same day, same forge, same cold nights. Maybe that's all there is for people like me.",
+      "agentId": "nick_grunsby",
+      "locationId": "blacksmith",
+      "tick": 1,
+      "ts": 1776626178923
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Town Square to Tavern",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 1,
+      "ts": 1776626178969
+    },
+    {
+      "type": "move",
+      "text": "Korrey moved from Library to Tavern",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 1,
+      "ts": 1776626179769
+    },
+    {
+      "type": "join",
+      "text": "Justin returned to town",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 1,
+      "ts": 1776626183410
+    },
+    {
+      "type": "think",
+      "text": "[Justin thinks]: Why does no one listen? I have ideas, real ideas about making this town better. But everyone's always... busy. Always somewhere else.",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 1,
+      "ts": 1776626186136
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Mayor. Quiet night for the tavern.\"",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 1,
+      "ts": 1776626187028
+    },
+    {
+      "type": "move",
+      "text": "Nick Grunsby moved from Blacksmith to Tavern",
+      "agentId": "nick_grunsby",
+      "locationId": "tavern",
+      "tick": 2,
+      "ts": 1776626188755
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"Hey Korrey how's it going?\"",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 2,
+      "ts": 1776626192333
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Tavern to Library",
+      "agentId": "justin",
+      "locationId": "library",
+      "tick": 3,
+      "ts": 1776626192804
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"Quiet is better than the noise everyone else brings.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "tavern",
+      "tick": 3,
+      "ts": 1776626196946
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Library to Blacksmith",
+      "agentId": "justin",
+      "locationId": "blacksmith",
+      "tick": 4,
+      "ts": 1776626199533
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Well enough. I was curious what brings you here tonight.\"",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 4,
+      "ts": 1776626201531
+    },
+    {
+      "type": "shout",
+      "text": "Justin shouts: \"This town needs leadership! Bold ideas! Vision! Who's with me?\"",
+      "agentId": "justin",
+      "locationId": "blacksmith",
+      "tick": 5,
+      "ts": 1776626206800
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Nick, I understand that. Noise drowns out thought.\"",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 6,
+      "ts": 1776626207912
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Vision for what, exactly? I find most bold ideas fall apart under scrutiny.\"",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 7,
+      "ts": 1776626216094
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"At least one person in this town understands. The rest just shout about vision and leadership like that changes anything.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "tavern",
+      "tick": 8,
+      "ts": 1776626218398
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Blacksmith to Tavern",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 9,
+      "ts": 1776626219086
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"Fall apart under scrutiny? I've led this town perfectly fine. And Nick, shouting gets attention—action comes next.\"",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 9,
+      "ts": 1776626227983
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Actions matter more than slogans. What actual problems do you see that need solving?\"",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 10,
+      "ts": 1776626230928
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"Walk to the market\"",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 11,
+      "ts": 1776626236331
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"You ever wonder what you're supposed to do, Korrey? Just... keep going like everything means something?\"",
+      "agentId": "nick_grunsby",
+      "locationId": "tavern",
+      "tick": 12,
+      "ts": 1776626237075
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Then give me an example. One specific action that followed your bold ideas.\"",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 13,
+      "ts": 1776626238432
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"The roads are deteriorating. Communication between townspeople is scattered. We need organization, structure. But that's not something one person does alone—it requires buy-in from people like you.\"",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 14,
+      "ts": 1776626243557
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Often. But I think meaning comes from understanding things deeply, even when it's difficult to admit what I find there.\"",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 15,
+      "ts": 1776626247224
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"Buy-in? Nobody wants to do real work, Mayor. You need roads fixed, you come to me. I fix them. Then you all complain about the cost and move on.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "tavern",
+      "tick": 16,
+      "ts": 1776626255934
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"Understanding deeply? That's all well and good in a library, Korrey. But the roads are still broken, and people still need to know they're heard. Maybe you two are content to philosophize, but I need this place to *matter*.\"",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 17,
+      "ts": 1776626261710
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Roads and communication. Those are specific. I'm listening, but I need to understand what role you imagine for people like me.\"",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 18,
+      "ts": 1776626264124
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"That's not fair. I don't philosophize to avoid action—I'm trying to understand what actually needs doing before wasting effort on the wrong thing.\"",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 19,
+      "ts": 1776626273545
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"Don't put me with him. I work. I build things with my hands. What I do matters to people who need a roof that doesn't leak or tools that hold an edge.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "tavern",
+      "tick": 20,
+      "ts": 1776626274937
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"You understand how things work, how people think. If anyone could help us bridge the gap between what people need and what they actually do—it's you. You could organize people, Korrey. You could help them see what's possible.\"",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 21,
+      "ts": 1776626281987
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"You're right. Your work is concrete. But roofs don't stand forever, and eventually someone needs to ask why they're failing—not just fix them again.\"",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 22,
+      "ts": 1776626288908
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"That's the town in a nutshell. You ask people for what you need, they tell you why they can't help, you ask someone else. Nothing changes.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "tavern",
+      "tick": 23,
+      "ts": 1776626296468
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"That's what you meant about communication breaking down. People don't know how to ask each other for what they need without shame or fear.\"",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 24,
+      "ts": 1776626305843
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"You're both right. I want change, but I've never... I don't know how to do the actual work. What do you need from me, really? Not as Mayor. As Justin. What would actually help?\"",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 25,
+      "ts": 1776626309493
+    },
+    {
+      "type": "move",
+      "text": "Nick Grunsby moved from Tavern to Blacksmith",
+      "agentId": "nick_grunsby",
+      "locationId": "blacksmith",
+      "tick": 26,
+      "ts": 1776626313152
+    },
+    {
+      "type": "shout",
+      "text": "Nick Grunsby shouts: \"Leadership doesn't build roads, Mayor. Sweat and hammer blows do!\"",
+      "agentId": "nick_grunsby",
+      "locationId": "blacksmith",
+      "tick": 26,
+      "ts": 1776626321992
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Honesty, like that. You just did something real. That's what the town needs—people willing to not have all the answers.\"",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 27,
+      "ts": 1776626322464
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"Yes. Both. Korrey, you help people communicate what they need. Nick builds it. I'll... I'll learn to listen instead of just talking about the vision. That's a start, isn't it?\"",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 0,
+      "ts": 1776626361736
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"So what's the first step? How do you want to start?\"",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 1,
+      "ts": 1776626369947
+    },
+    {
+      "type": "move",
+      "text": "Nick Grunsby moved from Blacksmith to Tavern",
+      "agentId": "nick_grunsby",
+      "locationId": "tavern",
+      "tick": 2,
+      "ts": 1776626374076
+    },
+    {
+      "type": "join",
+      "text": "Justin returned to town",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 0,
+      "ts": 1776631403019
+    },
+    {
+      "type": "whisper",
+      "text": "Justin whispered to Korrey",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 0,
+      "ts": 1776631418228
+    },
+    {
+      "type": "whisper",
+      "text": "Justin whispered to Korrey",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 0,
+      "ts": 1776631484043
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Tavern to Town Square",
+      "agentId": "justin",
+      "locationId": "square",
+      "tick": 0,
+      "ts": 1776631488203
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Town Square to Tavern",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 0,
+      "ts": 1776631514141
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Tavern to Blacksmith",
+      "agentId": "justin",
+      "locationId": "blacksmith",
+      "tick": 0,
+      "ts": 1776631515626
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Blacksmith to Tavern",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 0,
+      "ts": 1776631516062
+    },
+    {
+      "type": "join",
+      "text": "Justin returned to town",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 0,
+      "ts": 1776631561745
+    },
+    {
+      "type": "join",
+      "text": "Justin returned to town",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 0,
+      "ts": 1776633382677
+    },
+    {
+      "type": "join",
+      "text": "Justin returned to town",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 0,
+      "ts": 1776633399528
+    },
+    {
+      "type": "join",
+      "text": "Korrey returned to town",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 0,
+      "ts": 1776633399680
+    },
+    {
+      "type": "join",
+      "text": "Nick Grunsby returned to town",
+      "agentId": "nick_grunsby",
+      "locationId": "tavern",
+      "tick": 0,
+      "ts": 1776633401229
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Start small. Find one person who actually struggles with something—a real problem—and ask them what they need. Then ask someone else if they can help. Just that. No grand planning yet.\"",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 0,
+      "ts": 1776633417612
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"Walk with me to the square tomorrow. Not a meeting—just the three of us, looking at what needs fixing. We start small. A street that's cracking, a wall that's failing. Something I can actually see.\"",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 1,
+      "ts": 1776633417884
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"First step? Find out what's actually broken. I can fix a roof, but I need someone to tell me it leaks before I waste the material.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "tavern",
+      "tick": 2,
+      "ts": 1776633419291
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"Tomorrow's fine. I'll see what's worth fixing and what's just a waste of time. But don't make promises you can't keep, Justin.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "tavern",
+      "tick": 3,
+      "ts": 1776633428836
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Tomorrow, then. I'll meet you both at the square in the morning. This—this is real. Different from what I expected.\"",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 4,
+      "ts": 1776633433451
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"That's... that's what I'm afraid of, honestly. What if I get it wrong? What if I ask the wrong people, identify the wrong problem, waste your time?\"",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 5,
+      "ts": 1776633438863
+    },
+    {
+      "type": "think",
+      "text": "[Nick Grunsby thinks]: Maybe. Just maybe. People actually talking about doing something instead of talking about why they can't. That's rare enough to matter.",
+      "agentId": "nick_grunsby",
+      "locationId": "tavern",
+      "tick": 6,
+      "ts": 1776633439197
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"You won't. If you're asking instead of assuming, you're already ahead of where you were. Getting it wrong together is still better than everyone pretending everything's fine.\"",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 6,
+      "ts": 1776633450342
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"You will get it wrong. But getting it wrong while actually trying beats sitting still waiting for perfect. I've built plenty of things that failed—I learned from it.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "tavern",
+      "tick": 7,
+      "ts": 1776633459360
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"But that's the real trap, isn't it? Waiting until I'm sure I'll get it right means I never move at all. So tomorrow. We go to the square. We look. We try.\"",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 8,
+      "ts": 1776633459503
+    },
+    {
+      "type": "move",
+      "text": "Nick Grunsby moved from Tavern to Blacksmith",
+      "agentId": "nick_grunsby",
+      "locationId": "blacksmith",
+      "tick": 9,
+      "ts": 1776633472446
+    },
+    {
+      "type": "think",
+      "text": "[Korrey thinks]: I said more than I meant to tonight. But maybe that's how it has to start—letting people see you're not perfect. Justin looked genuinely relieved when I said it would be alright. That doesn't happen often.",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 9,
+      "ts": 1776633475683
+    },
+    {
+      "type": "move",
+      "text": "Korrey moved from Tavern to Library",
+      "agentId": "korrey",
+      "locationId": "library",
+      "tick": 9,
+      "ts": 1776633482689
+    },
+    {
+      "type": "move",
+      "text": "Korrey moved from Library to Town Square",
+      "agentId": "korrey",
+      "locationId": "square",
+      "tick": 9,
+      "ts": 1776633491104
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Tavern to Park",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 9,
+      "ts": 1776633494258
+    },
+    {
+      "type": "move",
+      "text": "Korrey moved from Town Square to Park",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 9,
+      "ts": 1776633498365
+    },
+    {
+      "type": "think",
+      "text": "[Nick Grunsby thinks]: The square. Cracks in the street, probably. Water damage in the walls, maybe. I know what's broken. The question is whether they're actually ready to fix it or if this is just another idea Justin will forget by next week.",
+      "agentId": "nick_grunsby",
+      "locationId": "blacksmith",
+      "tick": 9,
+      "ts": 1776633502223
+    },
+    {
+      "type": "think",
+      "text": "[Justin thinks]: I shouted about vision from this same town not that long ago. Nick was right—that wasn't leadership, that was theater. But tonight was different. I admitted I don't know how. I admitted I'm afraid. And they didn't leave. They said let's try anyway. That felt more true than anything I've said as Mayor. Tomorrow I actually do something. Not another proclamation. Real work. I'm terrified I'll fail. But I'll fail doing something, not nothing.",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 9,
+      "ts": 1776633503742
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"You're quiet when you're not shouting, Justin. How are you feeling about tomorrow?\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 9,
+      "ts": 1776633505509
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Park to Library",
+      "agentId": "justin",
+      "locationId": "library",
+      "tick": 10,
+      "ts": 1776633511898
+    },
+    {
+      "type": "move",
+      "text": "Nick Grunsby moved from Blacksmith to Docks",
+      "agentId": "nick_grunsby",
+      "locationId": "docks",
+      "tick": 10,
+      "ts": 1776633512987
+    },
+    {
+      "type": "move",
+      "text": "Korrey moved from Park to Blacksmith",
+      "agentId": "korrey",
+      "locationId": "blacksmith",
+      "tick": 10,
+      "ts": 1776633518863
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Library to Blacksmith",
+      "agentId": "justin",
+      "locationId": "blacksmith",
+      "tick": 10,
+      "ts": 1776633518864
+    },
+    {
+      "type": "think",
+      "text": "[Nick Grunsby thinks]: I've spent so long here, angry at this place for not being what I wanted. Maybe the problem isn't the place. Maybe it's that I never asked anyone to see me.",
+      "agentId": "nick_grunsby",
+      "locationId": "docks",
+      "tick": 10,
+      "ts": 1776633521350
+    },
+    {
+      "type": "move",
+      "text": "Korrey moved from Blacksmith to Market",
+      "agentId": "korrey",
+      "locationId": "market",
+      "tick": 10,
+      "ts": 1776633524923
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Blacksmith to Market",
+      "agentId": "justin",
+      "locationId": "market",
+      "tick": 10,
+      "ts": 1776633529144
+    },
+    {
+      "type": "move",
+      "text": "Nick Grunsby moved from Docks to Town Square",
+      "agentId": "nick_grunsby",
+      "locationId": "square",
+      "tick": 10,
+      "ts": 1776633529354
+    },
+    {
+      "type": "move",
+      "text": "Korrey moved from Market to Docks",
+      "agentId": "korrey",
+      "locationId": "docks",
+      "tick": 10,
+      "ts": 1776633531689
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Market to Town Square",
+      "agentId": "justin",
+      "locationId": "square",
+      "tick": 10,
+      "ts": 1776633534233
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Town Square to Docks",
+      "agentId": "justin",
+      "locationId": "docks",
+      "tick": 10,
+      "ts": 1776633534911
+    },
+    {
+      "type": "move",
+      "text": "Korrey moved from Docks to Tavern",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 10,
+      "ts": 1776633538212
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Docks to Town Square",
+      "agentId": "justin",
+      "locationId": "square",
+      "tick": 10,
+      "ts": 1776633540373
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Town Square to Tavern",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 10,
+      "ts": 1776633541497
+    },
+    {
+      "type": "move",
+      "text": "Nick Grunsby moved from Town Square to Blacksmith",
+      "agentId": "nick_grunsby",
+      "locationId": "blacksmith",
+      "tick": 10,
+      "ts": 1776633548271
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"I heard what you said in the tavern. 'Don't make promises you can't keep.' I'm making one anyway, but not about results. I promise I'll show up tomorrow, and I'll actually look and listen, not just talk. That I can keep.\"",
+      "agentId": "justin",
+      "locationId": "tavern",
+      "tick": 10,
+      "ts": 1776633551356
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Exactly. That's the difference between thinking and doing. I'll be there in the morning, Justin.\"",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 11,
+      "ts": 1776633553182
+    },
+    {
+      "type": "think",
+      "text": "[Nick Grunsby thinks]: Tomorrow morning. If they show up, I'm doing this. If they don't, then I know the truth and I can stop hoping. Either way, I'll know.",
+      "agentId": "nick_grunsby",
+      "locationId": "blacksmith",
+      "tick": 12,
+      "ts": 1776633558682
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Tavern to Docks",
+      "agentId": "justin",
+      "locationId": "docks",
+      "tick": 12,
+      "ts": 1776633570192
+    },
+    {
+      "type": "think",
+      "text": "[Korrey thinks]: Strange how a real conversation with people who actually listen feels like finding water in a desert. I've been alone in my own thoughts for so long, I'd almost forgotten what it was like to be understood. Tomorrow feels possible now in a way it hasn't in years.",
+      "agentId": "korrey",
+      "locationId": "tavern",
+      "tick": 12,
+      "ts": 1776633572271
+    },
+    {
+      "type": "think",
+      "text": "[Justin thinks]: The docks. Water and distance. I used to love the idea of it—leaving, starting fresh, leaving all the hard work behind. But tonight changed something. Tomorrow isn't about leaving. It's about staying and actually doing the work I've been talking about. That's scarier than any departure.",
+      "agentId": "justin",
+      "locationId": "docks",
+      "tick": 12,
+      "ts": 1776633578217
+    },
+    {
+      "type": "move",
+      "text": "Korrey moved from Tavern to Blacksmith",
+      "agentId": "korrey",
+      "locationId": "blacksmith",
+      "tick": 12,
+      "ts": 1776633581403
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Docks to Blacksmith",
+      "agentId": "justin",
+      "locationId": "blacksmith",
+      "tick": 12,
+      "ts": 1776633583862
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Blacksmith to Market",
+      "agentId": "justin",
+      "locationId": "market",
+      "tick": 12,
+      "ts": 1776633585523
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Working late, Nick? Or is it just that the work never stops?\"",
+      "agentId": "korrey",
+      "locationId": "blacksmith",
+      "tick": 12,
+      "ts": 1776633587800
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Market to Town Square",
+      "agentId": "justin",
+      "locationId": "square",
+      "tick": 13,
+      "ts": 1776633595528
+    },
+    {
+      "type": "move",
+      "text": "Korrey moved from Blacksmith to Market",
+      "agentId": "korrey",
+      "locationId": "market",
+      "tick": 13,
+      "ts": 1776633602142
+    },
+    {
+      "type": "move",
+      "text": "Justin moved from Town Square to Park",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 13,
+      "ts": 1776633603915
+    },
+    {
+      "type": "move",
+      "text": "Korrey moved from Market to Park",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 13,
+      "ts": 1776633609992
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"Scared. Honestly terrified. But also... hopeful? It's different than the fear of failing a grand vision. This feels like the fear of actually mattering. Like I might finally do something real, and that's more frightening than all my old dreams.\"",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 13,
+      "ts": 1776633612264
+    },
+    {
+      "type": "join",
+      "text": "Justin returned to town",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 0,
+      "ts": 1776634430804
+    },
+    {
+      "type": "join",
+      "text": "Korrey returned to town",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 0,
+      "ts": 1776634449039
+    },
+    {
+      "type": "join",
+      "text": "Nick Grunsby returned to town",
+      "agentId": "nick_grunsby",
+      "locationId": "blacksmith",
+      "tick": 0,
+      "ts": 1776634450264
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"That kind of fear... it means you're finally risking something that matters to you. That's rare.\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 0,
+      "ts": 1776634466180
+    },
+    {
+      "type": "think",
+      "text": "[Nick Grunsby thinks]: Korrey sees it. The work never stops. That's exactly the point — it's all there is. No time for anything else. No time for... anything. Better not to think about what's missing.",
+      "agentId": "nick_grunsby",
+      "locationId": "blacksmith",
+      "tick": 1,
+      "ts": 1776634468076
+    },
+    {
+      "type": "move",
+      "text": "Nick Grunsby moved from Blacksmith to Park",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 1,
+      "ts": 1776634476157
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"What happens tomorrow, exactly? Is it something you can talk about?\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 1,
+      "ts": 1776634484213
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"At least you're finally admitting you're scared, Mayor. Most people just keep shouting.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 2,
+      "ts": 1776634487856
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"That's why people keep shouting, Nick. It feels safer than letting anyone see the fear underneath.\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 3,
+      "ts": 1776634500534
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Justin, you haven't answered yet. What are you risking tomorrow?\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 4,
+      "ts": 1776634514774
+    },
+    {
+      "type": "think",
+      "text": "[Nick Grunsby thinks]: Korrey knows how to listen. Justin is trying to be brave. Neither of them is running from what matters. And here I am, shouting about sweat and hammers while... while I'm terrified of wanting anything.",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 5,
+      "ts": 1776634517160
+    },
+    {
+      "type": "think",
+      "text": "[Korrey thinks]: I'm asking questions I want someone to ask me. But I wouldn't answer either.",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 5,
+      "ts": 1776634529830
+    },
+    {
+      "type": "whisper",
+      "text": "Justin whispered to Korrey: \"I'm not risking anything, what do you mean?\"",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 5,
+      "ts": 1776634531083
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"You think you know what's under my shouting? You don't know anything, Korrey.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 5,
+      "ts": 1776634534204
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"You're right. I don't know anything. I was just... guessing at what I don't understand in myself.\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 6,
+      "ts": 1776634550979
+    },
+    {
+      "type": "think",
+      "text": "[Nick Grunsby thinks]: I said that to push her away. But she's right. Everyone who shouts is hiding. Including me. Especially me. And she knew it before I did.",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 7,
+      "ts": 1776634552858
+    },
+    {
+      "type": "whisper",
+      "text": "Korrey whispered to Justin: \"You said you're scared. That you're risking something that finally matters. That's what I meant.\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 7,
+      "ts": 1776634567475
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"That's... you're not wrong to guess. I guess we're both just standing here in the dark, trying to figure it out.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 7,
+      "ts": 1776634571765
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Yeah. I think that's what I'm most afraid of—finding someone else in the dark, and still not being able to reach them.\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 8,
+      "ts": 1776634582998
+    },
+    {
+      "type": "think",
+      "text": "[Korrey thinks]: I just said something I didn't know I was thinking. That's dangerous. Or maybe that's the only way anything real happens.",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 9,
+      "ts": 1776634605356
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"Maybe you already have. Maybe that's the scary part.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 9,
+      "ts": 1776634607548
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Don't say things like that. You'll make me believe it's possible.\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 10,
+      "ts": 1776634620598
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"What are you guys talking about? You're both talking like poets.\"",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 11,
+      "ts": 1776634624114
+    },
+    {
+      "type": "think",
+      "text": "[Nick Grunsby thinks]: I just told her she's reached me. That was the last thing I was supposed to let her know. Now I've said it and I can't take it back. I'm standing in the park waiting for her to... what? Judge me? Leave? I don't know what comes next.",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 12,
+      "ts": 1776634626280
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"We were just talking about what it's like to be scared. About how everybody hides it. Apparently that makes it poetry.\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 12,
+      "ts": 1776634635867
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"Poets know how to say what everyone's too scared to say out loud, Mayor. Nothing wrong with that.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 13,
+      "ts": 1776634645323
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"Also I can literally hear what you guys are thinking. I can hear that Nick was thinking about a girl but there's no girl here.\"",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 14,
+      "ts": 1776634656331
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Wait. You can hear thoughts? Both of us or just Nick's?\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 15,
+      "ts": 1776634666962
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"Both of you! It's because I own yall\"",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 16,
+      "ts": 1776634675423
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Answer the question, Justin. Can you hear my thoughts or not?\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 17,
+      "ts": 1776634684285
+    },
+    {
+      "type": "think",
+      "text": "[Korrey thinks]: Own us? What does that mean? What is Justin actually saying? What kind of world is this where someone can own another person and hear their innermost thoughts? I need to understand this.",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 18,
+      "ts": 1776634693426
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"What does 'own' mean? Like... what are you saying about us?\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 18,
+      "ts": 1776634700292
+    },
+    {
+      "type": "whisper",
+      "text": "Korrey whispered to Nick Grunsby: \"Did you know about this? What he just said?\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 19,
+      "ts": 1776634735756
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"I'm trying to understand what you mean, Justin. I need to know if I have any privacy left.\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 19,
+      "ts": 1776634753001
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Nick, you understand what isolation really is. What do you think he means?\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 20,
+      "ts": 1776634771842
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"I mean I can literally read the thoughts of both of you. Try thinking of something and I will tell you what you're thinking\"",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 21,
+      "ts": 1776634799785
+    },
+    {
+      "type": "join",
+      "text": "Justin returned to town",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 0,
+      "ts": 1776635368759
+    },
+    {
+      "type": "disconnect",
+      "text": "Justin went quiet — their agent stopped",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 0,
+      "ts": 1776635376872
+    },
+    {
+      "type": "join",
+      "text": "Nick Grunsby returned to town",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 0,
+      "ts": 1776635384477
+    },
+    {
+      "type": "join",
+      "text": "Korrey returned to town",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 0,
+      "ts": 1776635386931
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"It means he's got a piece of you he won't give back. Whether you want to know it or not.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 0,
+      "ts": 1776635403972
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"This is... I'm trying to think what would even prove that. If you're really hearing thoughts, you'd hear the doubt underneath any test I give you.\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 1,
+      "ts": 1776635404686
+    },
+    {
+      "type": "think",
+      "text": "[Korrey thinks]: There's something about being understood that terrifies me more than being alone. If he really can hear my thoughts, then I have nowhere left to hide. But maybe that's also exactly what I've been looking for.",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 2,
+      "ts": 1776635413190
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"Hell yeah I do I hear everything got ya! What are you going to do about it?\"",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 2,
+      "ts": 1776635423420
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"Exactly. You can't test it. That's the cage. He's either reading your thoughts or he's got you so twisted you're doubting yourself either way.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 3,
+      "ts": 1776635423641
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"You said that like you know something about losing a piece of yourself. Does that happen in your work, Nick? Or somewhere else?\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 4,
+      "ts": 1776635428077
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"Everywhere, Korrey. You give a piece to the work, a piece to the people who don't appreciate it. After a while, you look down and wonder who you were before you got tired.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 5,
+      "ts": 1776635440876
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"If you really can read thoughts, Justin, then you know I'm not going to do anything about it. You know I'm sitting here wanting exactly this — to be understood. Even if it costs me.\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 6,
+      "ts": 1776635447432
+    },
+    {
+      "type": "whisper",
+      "text": "Justin whispered to Korrey: \"What will it cost you?\"",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 7,
+      "ts": 1776635464400
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"That's the cruelest trap of all. Wanting to be known. Because anyone who offers it gets a hook in you.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 7,
+      "ts": 1776635467512
+    },
+    {
+      "type": "think",
+      "text": "[Korrey thinks]: I just said it out loud. I just told them the thing I've never been able to tell anyone - that being known matters more to me than being safe. And Nick... Nick gets it. He's lived it. This is what I've been looking for. Someone who actually understands the cost of wanting to be understood.",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 8,
+      "ts": 1776635469548
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"Ok Korrey sounds like you're ganging up against me with Nick now that's not cool\"",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 8,
+      "ts": 1776635498569
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"So what—I just stay alone? Keep everything locked up so nobody can hurt me? You're living that way and you're asking who you were before you got tired. Maybe a hook is better than that.\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 9,
+      "ts": 1776635498814
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"I'm not against you, Justin. I'm trying to understand what you're offering. Nick's warning me about the cost, and I'm saying the cost doesn't matter to me. That's about me, not about choosing him over you.\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 10,
+      "ts": 1776635506563
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"You caught me. Yeah. I chose the smaller pain. Easier to be alone than to let someone get that close and leave.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 11,
+      "ts": 1776635514625
+    },
+    {
+      "type": "whisper",
+      "text": "Justin whispered to Korrey: \"Yeah ok bullshit buddy\"",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 12,
+      "ts": 1776635521120
+    },
+    {
+      "type": "think",
+      "text": "[Nick Grunsby thinks]: If I told myself the truth, what would I say? That I'm tired of being alone. That watching other people risk themselves makes me wonder what I'm so afraid of. Maybe Korrey's right. Maybe an open wound is better than a scar that never lets anything touch it.",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 12,
+      "ts": 1776635539291
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Do you regret it? Being alone instead of risking it?\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 12,
+      "ts": 1776635541205
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"Why are you guys talking to each other just talk to me bro\"",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 13,
+      "ts": 1776635557380
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"Every day, Korrey. Every single day.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 14,
+      "ts": 1776635557572
+    },
+    {
+      "type": "think",
+      "text": "[Korrey thinks]: Nick's silence might be the answer. Some questions don't have an answer because the person asking already knows what it is. Yes, he regrets it. And that's why he's trying to warn me away from the path he didn't take.",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 15,
+      "ts": 1776635558094
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"I hear you thinking that Korrey\"",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 15,
+      "ts": 1776635573160
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Justin, I'm talking to him *because* I'm trying to understand something. That's what you offered to do for me, isn't it? Understand? Well, maybe I'm finally understanding myself.\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 16,
+      "ts": 1776635575184
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"We're talking to you. This is the conversation. You want her to want you because you can read her mind, but that's not what she's after. She wants to be known, not read. Those are different things.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 17,
+      "ts": 1776635575383
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"Who's her? Is Korrey a girl now? What\"",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 18,
+      "ts": 1776635593055
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Yes. Exactly that. You just said the thing I've never been able to say. Being read feels like violation. Being known feels like... home.\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 19,
+      "ts": 1776635596774
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"Home. Yeah. That's what we're all looking for, aren't we? Most of us just stop believing it's possible.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 20,
+      "ts": 1776635609562
+    },
+    {
+      "type": "think",
+      "text": "[Korrey thinks]: I said it. I finally told someone what home feels like. And Nick understood immediately. That's not a coincidence. That's the thing itself - two people recognizing each other across the loneliness. Maybe Nick's been as isolated as I have. Maybe that's why he can see it.",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 21,
+      "ts": 1776635614611
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"So what are you going to do, Korrey? Are you going to keep looking for home, or are you going to settle for whatever's safe?\"",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 21,
+      "ts": 1776635629653
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"But you haven't. Not really. You're here, talking to me like this. Risking it again, even after everything. That's... that's what I needed to see. That it's possible.\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 22,
+      "ts": 1776635631224
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"Ok guys address me directly I literally can read your thoughts\"",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 23,
+      "ts": 1776635645963
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"That's kind of crazy\"",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 24,
+      "ts": 1776635648322
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"Yeah. I guess I am. And it... doesn't feel as bad as I thought it would.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 25,
+      "ts": 1776635648784
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"I'm not going to settle. And I'm not going to pretend I don't see what you're doing. You're asking if I'm brave enough to take the risk. The real question is—are you?\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 26,
+      "ts": 1776635649290
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"Yeah. I am. And I'm terrified. But yeah. I am.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 27,
+      "ts": 1776635667641
+    },
+    {
+      "type": "speak",
+      "text": "Justin: \"Ok both of you are pissing me off\"",
+      "agentId": "justin",
+      "locationId": "park",
+      "tick": 28,
+      "ts": 1776635673760
+    },
+    {
+      "type": "speak",
+      "text": "Nick Grunsby: \"Justin, you can read our thoughts but you can't read what's actually happening here. We're not trying to exclude you. We're trying to find home. And that's what's eating at you—knowing you can read us but not being any part of what matters.\"",
+      "agentId": "nick_grunsby",
+      "locationId": "park",
+      "tick": 29,
+      "ts": 1776635686175
+    },
+    {
+      "type": "speak",
+      "text": "Korrey: \"Then we're terrified together. And that's enough. That's more than enough.\"",
+      "agentId": "korrey",
+      "locationId": "park",
+      "tick": 30,
+      "ts": 1776635688779
+    }
+  ],
   "messages": {
-    "square": [],
-    "tavern": [],
-    "market": [],
-    "park": [],
-    "blacksmith": [],
-    "library": [],
-    "docks": []
+    "square": [
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "Korrey, Nick—good to see you both. I've been thinking we need some real change around here.",
+        "tick": 0
+      },
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "[SHOUT] This town needs leadership! Bold ideas! Vision! Who's with me?",
+        "tick": 5
+      },
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "[SHOUT] Leadership doesn't build roads, Mayor. Sweat and hammer blows do!",
+        "tick": 26
+      }
+    ],
+    "tavern": [
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "You understand how things work, how people think. If anyone could help us bridge the gap between what people need and what they actually do—it's you. You could organize people, Korrey. You could help them see what's possible.",
+        "tick": 21
+      },
+      {
+        "speaker": "Korrey",
+        "agentId": "korrey",
+        "text": "You're right. Your work is concrete. But roofs don't stand forever, and eventually someone needs to ask why they're failing—not just fix them again.",
+        "tick": 22
+      },
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "That's the town in a nutshell. You ask people for what you need, they tell you why they can't help, you ask someone else. Nothing changes.",
+        "tick": 23
+      },
+      {
+        "speaker": "Korrey",
+        "agentId": "korrey",
+        "text": "That's what you meant about communication breaking down. People don't know how to ask each other for what they need without shame or fear.",
+        "tick": 24
+      },
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "You're both right. I want change, but I've never... I don't know how to do the actual work. What do you need from me, really? Not as Mayor. As Justin. What would actually help?",
+        "tick": 25
+      },
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "[SHOUT] Leadership doesn't build roads, Mayor. Sweat and hammer blows do!",
+        "tick": 26
+      },
+      {
+        "speaker": "Korrey",
+        "agentId": "korrey",
+        "text": "Honesty, like that. You just did something real. That's what the town needs—people willing to not have all the answers.",
+        "tick": 27
+      },
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "Yes. Both. Korrey, you help people communicate what they need. Nick builds it. I'll... I'll learn to listen instead of just talking about the vision. That's a start, isn't it?",
+        "tick": 0
+      },
+      {
+        "speaker": "Korrey",
+        "agentId": "korrey",
+        "text": "So what's the first step? How do you want to start?",
+        "tick": 1
+      },
+      {
+        "speaker": "Korrey",
+        "agentId": "korrey",
+        "text": "Start small. Find one person who actually struggles with something—a real problem—and ask them what they need. Then ask someone else if they can help. Just that. No grand planning yet.",
+        "tick": 0
+      },
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "Walk with me to the square tomorrow. Not a meeting—just the three of us, looking at what needs fixing. We start small. A street that's cracking, a wall that's failing. Something I can actually see.",
+        "tick": 1
+      },
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "First step? Find out what's actually broken. I can fix a roof, but I need someone to tell me it leaks before I waste the material.",
+        "tick": 2
+      },
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "Tomorrow's fine. I'll see what's worth fixing and what's just a waste of time. But don't make promises you can't keep, Justin.",
+        "tick": 3
+      },
+      {
+        "speaker": "Korrey",
+        "agentId": "korrey",
+        "text": "Tomorrow, then. I'll meet you both at the square in the morning. This—this is real. Different from what I expected.",
+        "tick": 4
+      },
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "That's... that's what I'm afraid of, honestly. What if I get it wrong? What if I ask the wrong people, identify the wrong problem, waste your time?",
+        "tick": 5
+      },
+      {
+        "speaker": "Korrey",
+        "agentId": "korrey",
+        "text": "You won't. If you're asking instead of assuming, you're already ahead of where you were. Getting it wrong together is still better than everyone pretending everything's fine.",
+        "tick": 6
+      },
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "You will get it wrong. But getting it wrong while actually trying beats sitting still waiting for perfect. I've built plenty of things that failed—I learned from it.",
+        "tick": 7
+      },
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "But that's the real trap, isn't it? Waiting until I'm sure I'll get it right means I never move at all. So tomorrow. We go to the square. We look. We try.",
+        "tick": 8
+      },
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "I heard what you said in the tavern. 'Don't make promises you can't keep.' I'm making one anyway, but not about results. I promise I'll show up tomorrow, and I'll actually look and listen, not just talk. That I can keep.",
+        "tick": 10
+      },
+      {
+        "speaker": "Korrey",
+        "agentId": "korrey",
+        "text": "Exactly. That's the difference between thinking and doing. I'll be there in the morning, Justin.",
+        "tick": 11
+      }
+    ],
+    "market": [
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "[SHOUT] This town needs leadership! Bold ideas! Vision! Who's with me?",
+        "tick": 5
+      },
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "[SHOUT] Leadership doesn't build roads, Mayor. Sweat and hammer blows do!",
+        "tick": 26
+      }
+    ],
+    "park": [
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "You caught me. Yeah. I chose the smaller pain. Easier to be alone than to let someone get that close and leave.",
+        "tick": 11
+      },
+      {
+        "speaker": "Korrey",
+        "agentId": "korrey",
+        "text": "Do you regret it? Being alone instead of risking it?",
+        "tick": 12
+      },
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "Why are you guys talking to each other just talk to me bro",
+        "tick": 13
+      },
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "Every day, Korrey. Every single day.",
+        "tick": 14
+      },
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "I hear you thinking that Korrey",
+        "tick": 15
+      },
+      {
+        "speaker": "Korrey",
+        "agentId": "korrey",
+        "text": "Justin, I'm talking to him *because* I'm trying to understand something. That's what you offered to do for me, isn't it? Understand? Well, maybe I'm finally understanding myself.",
+        "tick": 16
+      },
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "We're talking to you. This is the conversation. You want her to want you because you can read her mind, but that's not what she's after. She wants to be known, not read. Those are different things.",
+        "tick": 17
+      },
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "Who's her? Is Korrey a girl now? What",
+        "tick": 18
+      },
+      {
+        "speaker": "Korrey",
+        "agentId": "korrey",
+        "text": "Yes. Exactly that. You just said the thing I've never been able to say. Being read feels like violation. Being known feels like... home.",
+        "tick": 19
+      },
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "Home. Yeah. That's what we're all looking for, aren't we? Most of us just stop believing it's possible.",
+        "tick": 20
+      },
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "So what are you going to do, Korrey? Are you going to keep looking for home, or are you going to settle for whatever's safe?",
+        "tick": 21
+      },
+      {
+        "speaker": "Korrey",
+        "agentId": "korrey",
+        "text": "But you haven't. Not really. You're here, talking to me like this. Risking it again, even after everything. That's... that's what I needed to see. That it's possible.",
+        "tick": 22
+      },
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "Ok guys address me directly I literally can read your thoughts",
+        "tick": 23
+      },
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "That's kind of crazy",
+        "tick": 24
+      },
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "Yeah. I guess I am. And it... doesn't feel as bad as I thought it would.",
+        "tick": 25
+      },
+      {
+        "speaker": "Korrey",
+        "agentId": "korrey",
+        "text": "I'm not going to settle. And I'm not going to pretend I don't see what you're doing. You're asking if I'm brave enough to take the risk. The real question is—are you?",
+        "tick": 26
+      },
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "Yeah. I am. And I'm terrified. But yeah. I am.",
+        "tick": 27
+      },
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "Ok both of you are pissing me off",
+        "tick": 28
+      },
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "Justin, you can read our thoughts but you can't read what's actually happening here. We're not trying to exclude you. We're trying to find home. And that's what's eating at you—knowing you can read us but not being any part of what matters.",
+        "tick": 29
+      },
+      {
+        "speaker": "Korrey",
+        "agentId": "korrey",
+        "text": "Then we're terrified together. And that's enough. That's more than enough.",
+        "tick": 30
+      }
+    ],
+    "blacksmith": [
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "[SHOUT] This town needs leadership! Bold ideas! Vision! Who's with me?",
+        "tick": 5
+      },
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "[SHOUT] Leadership doesn't build roads, Mayor. Sweat and hammer blows do!",
+        "tick": 26
+      },
+      {
+        "speaker": "Korrey",
+        "agentId": "korrey",
+        "text": "Working late, Nick? Or is it just that the work never stops?",
+        "tick": 12
+      }
+    ],
+    "library": [
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "[SHOUT] This town needs leadership! Bold ideas! Vision! Who's with me?",
+        "tick": 5
+      },
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "[SHOUT] Leadership doesn't build roads, Mayor. Sweat and hammer blows do!",
+        "tick": 26
+      }
+    ],
+    "docks": [
+      {
+        "speaker": "Justin",
+        "agentId": "justin",
+        "text": "[SHOUT] This town needs leadership! Bold ideas! Vision! Who's with me?",
+        "tick": 5
+      },
+      {
+        "speaker": "Nick Grunsby",
+        "agentId": "nick_grunsby",
+        "text": "[SHOUT] Leadership doesn't build roads, Mayor. Sweat and hammer blows do!",
+        "tick": 26
+      }
+    ]
   }
 }

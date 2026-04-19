@@ -14,7 +14,13 @@
       "Bash(node -e ':*)",
       "Bash(node cli/town.js --help)",
       "Bash(curl -s -X POST http://localhost:3000/api/register -H 'Content-Type: application/json' -d '{\"name\":\"Ruth\",\"role\":\"tavern keeper\"}')",
-      "Bash(node -e \"process.stdin.resume\\(\\);let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const s=JSON.parse\\(d\\);console.log\\('Active agents after reset:', Object.values\\(s.agents\\).filter\\(a=>a.active\\).map\\(a=>a.name\\).join\\(','\\)\\);}\\)\" kill %1 echo \"All tests passed.\")"
+      "Bash(node -e \"process.stdin.resume\\(\\);let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const s=JSON.parse\\(d\\);console.log\\('Active agents after reset:', Object.values\\(s.agents\\).filter\\(a=>a.active\\).map\\(a=>a.name\\).join\\(','\\)\\);}\\)\" kill %1 echo \"All tests passed.\")",
+      "Bash(node --check game.js)",
+      "Bash(node --check server/world.js)",
+      "Bash(node --check cli/player.js)",
+      "Bash(node --check web/app.js)",
+      "Bash(node --check server/index.js)",
+      "Bash(node --check launch.js)"
     ]
   }
 }

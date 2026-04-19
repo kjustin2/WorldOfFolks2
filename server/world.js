@@ -27,6 +27,7 @@ class World {
     this.messages = {};   // locationId -> [{speaker, agentId, text, tick}]  (last 20 per location)
     this.whispers = {};   // targetId -> [{from, text, tick}]
     this.pids = {};       // agentId -> pid (for killing processes on reset)
+    this.worldPause = null;  // { holder: playerId, until: ts } — while set, AI actions that affect others wait
 
     // Init message buckets
     for (const loc of LOCATION_IDS) this.messages[loc] = [];
@@ -48,7 +49,14 @@ class World {
         for (const loc of LOCATION_IDS) {
           if (!this.messages[loc]) this.messages[loc] = [];
         }
-        console.log(`[World] Loaded state: ${Object.keys(this.agents).length} agents`);
+        // Persisted agents carry their last location but are NOT live until a
+        // subprocess registers for them again. Without this reset, the browser
+        // would think the town is already running and skip the welcome-back
+        // prompt.
+        for (const id of Object.keys(this.agents)) {
+          this.agents[id].active = false;
+        }
+        console.log(`[World] Loaded state: ${Object.keys(this.agents).length} agents (awaiting launch)`);
       }
     } catch (err) {
       console.error('[World] Failed to load state:', err.message);
@@ -276,18 +284,29 @@ class World {
   whisper(agentId, targetName, message) {
     const agent  = this.agents[agentId];
     if (!agent) return { success: false, error: 'Unknown agent' };
+    if (!message || !message.trim()) return { success: false, error: 'Nothing to whisper.' };
 
     const targetId = this._nameToId(targetName);
     const target   = this.agents[targetId];
     if (!target || !target.active) {
       return { success: false, error: `${targetName} is not in town.` };
     }
+    if (target.id === agent.id) {
+      return { success: false, error: `You can't whisper to yourself.` };
+    }
+    if (target.location !== agent.location) {
+      return {
+        success: false,
+        error: `${target.name} isn't here — you can only whisper to someone at your location.`,
+      };
+    }
 
+    const text = message.trim();
     if (!this.whispers[targetId]) this.whispers[targetId] = [];
-    this.whispers[targetId].push({ from: agent.name, text: message.trim(), tick: this.tick });
+    this.whispers[targetId].push({ from: agent.name, text, tick: this.tick });
 
-    this._log('whisper', `${agent.name} whispered to ${target.name}`, agentId, agent.location);
-    return { success: true, to: target.name, message: message.trim() };
+    this._log('whisper', `${agent.name} whispered to ${target.name}: "${text}"`, agentId, agent.location);
+    return { success: true, to: target.name, message: text };
   }
 
   think(agentId, thought) {
@@ -308,6 +327,66 @@ class World {
     fs.appendFileSync(file, line);
 
     return { success: true, remembered: text.trim() };
+  }
+
+  // ─── World pause (player is composing — freeze AI actions that affect others) ─
+
+  pause(holderId, ttlMs = 2 * 60_000) {
+    this.worldPause = { holder: holderId || null, until: Date.now() + ttlMs };
+    return { success: true, until: this.worldPause.until };
+  }
+
+  resume(holderId) {
+    if (!this.worldPause) return { success: true };
+    if (holderId && this.worldPause.holder && this.worldPause.holder !== holderId) {
+      return { success: false, error: 'Paused by someone else' };
+    }
+    this.worldPause = null;
+    return { success: true };
+  }
+
+  // True if AI action by `agentId` should wait for the world to unpause.
+  // The pause holder's own actions always go through.
+  isActionBlocked(agentId) {
+    if (!this.worldPause) return false;
+    if (this.worldPause.until <= Date.now()) { this.worldPause = null; return false; }
+    if (this.worldPause.holder === agentId) return false;
+    return true;
+  }
+
+  // ─── Agent health ────────────────────────────────────────────────────────────
+  // Marks agents whose process has died as inactive. Returns the list of agent
+  // ids that just flipped from active to inactive (server broadcasts them).
+
+  checkAgentHealth() {
+    const PIDS_DIR = path.join(__dirname, '..', 'characters', '.pids');
+    const dropped  = [];
+
+    for (const agent of Object.values(this.agents)) {
+      if (!agent.active || agent.isPlayer) continue;
+
+      const pidFile = path.join(PIDS_DIR, `${agent.id}.pid`);
+      let alive = false;
+
+      if (fs.existsSync(pidFile)) {
+        try {
+          const pid = parseInt(fs.readFileSync(pidFile, 'utf8').trim(), 10);
+          if (pid) {
+            try { process.kill(pid, 0); alive = true; }
+            catch { alive = false; }
+          }
+        } catch {}
+      }
+
+      if (!alive) {
+        agent.active = false;
+        this._log('disconnect', `${agent.name} went quiet — their agent stopped`, agent.id, agent.location);
+        try { if (fs.existsSync(pidFile)) fs.unlinkSync(pidFile); } catch {}
+        dropped.push(agent.id);
+      }
+    }
+
+    return dropped;
   }
 
   // ─── World State (for dashboard) ─────────────────────────────────────────────
@@ -342,7 +421,8 @@ class World {
     const names = Object.values(this.agents).map(a => a.name);
     this.agents = {};
     for (const loc of LOCATION_IDS) this.messages[loc] = [];
-    this.whispers = {};
+    this.whispers   = {};
+    this.worldPause = null;
     this._log('reset', 'All characters removed from town', null, null);
     this.saveState();
     return { success: true, removed: names };
