@@ -20,7 +20,12 @@
       "Bash(node --check cli/player.js)",
       "Bash(node --check web/app.js)",
       "Bash(node --check server/index.js)",
-      "Bash(node --check launch.js)"
+      "Bash(node --check launch.js)",
+      "Bash(node -e \"const s=JSON.parse\\(require\\('fs'\\).readFileSync\\('characters/world_state.json','utf8'\\)\\); console.log\\(Object.values\\(s.agents\\).map\\(a=>\\({name:a.name,isPlayer:a.isPlayer,active:a.active}\\)\\)\\);\")",
+      "Bash(node -e \"const s=JSON.parse\\(require\\('fs'\\).readFileSync\\('characters/world_state.json','utf8'\\)\\); console.log\\(JSON.stringify\\(s.agents,null,2\\)\\);\")",
+      "Bash(node -e \"['justin','korrey','nick'].forEach\\(n=>{try{const p=JSON.parse\\(require\\('fs'\\).readFileSync\\('characters/'+n+'.json','utf8'\\)\\);console.log\\(n,'isPlayer=',!!p.isPlayer\\)}catch\\(e\\){console.log\\(n,'missing'\\)}}\\)\")",
+      "Bash(git rm *)",
+      "Bash(git check-ignore *)"
     ]
   }
 }

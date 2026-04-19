@@ -51,6 +51,11 @@ app.post('/api/register', (req, res) => {
   if (!name || !role) return res.json({ success: false, error: 'name and role required' });
   const prevCount = world.eventLog.length;
   const result = world.register(name, role, !!isPlayer);
+  // If a human is taking over a character that already has an AI subprocess
+  // running, kill it now so the two don't compete for the same character.
+  if (isPlayer && result.success && result.agent) {
+    killAgentById(result.agent.id, result.agent.name);
+  }
   broadcastNewEvents(prevCount);
   broadcast({ type: 'state', state: world.getState() });
   res.json(result);
@@ -240,6 +245,37 @@ function killAgentTerminals() {
 
   launchedAgentNames = [];
   agentsLaunched     = false;
+}
+
+// Kill the AI subprocess (and its terminal window on Windows) for one agent.
+// Used when a human takes over an existing AI character so the two don't
+// fight over the same character.
+function killAgentById(agentId, agentName) {
+  const PIDS_DIR = path.join(ROOT, 'characters', '.pids');
+  const pidFile  = path.join(PIDS_DIR, `${agentId}.pid`);
+  const isWin    = process.platform === 'win32';
+  const { execSync } = require('child_process');
+
+  if (fs.existsSync(pidFile)) {
+    let pid = null;
+    try { pid = parseInt(fs.readFileSync(pidFile, 'utf8').trim(), 10); } catch {}
+    if (pid) {
+      try {
+        if (isWin) execSync(`taskkill /F /T /PID ${pid}`, { stdio: 'ignore' });
+        else       process.kill(pid, 'SIGTERM');
+      } catch {}
+    }
+    try { fs.unlinkSync(pidFile); } catch {}
+  }
+
+  if (isWin && agentName) {
+    const title = `WorldOfFolks2: ${agentName}`;
+    try {
+      execSync(`taskkill /F /FI "WINDOWTITLE eq ${title}" /T`, { stdio: 'ignore', shell: true });
+    } catch {}
+  }
+
+  launchedAgentNames = launchedAgentNames.filter(n => n !== agentName);
 }
 
 // Kill terminals when the server process exits (Ctrl-C or taskkill on the server)

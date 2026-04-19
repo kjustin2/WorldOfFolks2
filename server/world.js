@@ -149,8 +149,12 @@ class World {
   register(name, role, isPlayer = false) {
     const id = this._nameToId(name);
     if (this.agents[id]) {
-      // Re-registering (e.g. agent restarted) — update and return
+      // Re-registering (e.g. agent restarted, or a human is taking over an
+      // existing character). Always refresh isPlayer so a takeover from the
+      // observer "Play as" button correctly flips the flag — otherwise the
+      // health check below would treat the player's character as a dead AI.
       this.agents[id].active = true;
+      this.agents[id].isPlayer = isPlayer;
       this._log('join', `${name} returned to town`, id, this.agents[id].location);
       return { success: true, agent: this.agents[id] };
     }
@@ -366,22 +370,25 @@ class World {
       if (!agent.active || agent.isPlayer) continue;
 
       const pidFile = path.join(PIDS_DIR, `${agent.id}.pid`);
-      let alive = false;
 
-      if (fs.existsSync(pidFile)) {
-        try {
-          const pid = parseInt(fs.readFileSync(pidFile, 'utf8').trim(), 10);
-          if (pid) {
-            try { process.kill(pid, 0); alive = true; }
-            catch { alive = false; }
-          }
-        } catch {}
-      }
+      // No pid file = no AI subprocess was launched for this agent in this
+      // session (e.g. registered manually, or via the player CLI). Don't
+      // declare them dead just because we can't find a pid to ping.
+      if (!fs.existsSync(pidFile)) continue;
+
+      let alive = false;
+      try {
+        const pid = parseInt(fs.readFileSync(pidFile, 'utf8').trim(), 10);
+        if (pid) {
+          try { process.kill(pid, 0); alive = true; }
+          catch { alive = false; }
+        }
+      } catch {}
 
       if (!alive) {
         agent.active = false;
         this._log('disconnect', `${agent.name} went quiet — their agent stopped`, agent.id, agent.location);
-        try { if (fs.existsSync(pidFile)) fs.unlinkSync(pidFile); } catch {}
+        try { fs.unlinkSync(pidFile); } catch {}
         dropped.push(agent.id);
       }
     }
