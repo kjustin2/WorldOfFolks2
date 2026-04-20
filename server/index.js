@@ -36,9 +36,17 @@ function broadcast(msg) {
   }
 }
 
-// Broadcasts any event log entries added since prevCount
-function broadcastNewEvents(prevCount) {
-  const newEvents = world.eventLog.slice(prevCount);
+// Broadcasts any event log entries logged since `prevEventCount`. Uses the
+// monotonic `world.eventCount` rather than `eventLog.length` because the log
+// is capped at 200 entries and rotates via shift() — once full, length-based
+// deltas always read as zero, silently dropping every live broadcast.
+function broadcastNewEvents(prevEventCount) {
+  const delta = world.eventCount - prevEventCount;
+  if (delta <= 0) return;
+  // slice(-delta) handles delta > eventLog.length cleanly (returns the whole
+  // log) — we'd lose the very oldest few in that extreme case but action
+  // handlers only log a handful of events at a time.
+  const newEvents = world.eventLog.slice(-delta);
   for (const ev of newEvents) {
     broadcast({ type: 'event', event: ev });
   }
@@ -49,7 +57,7 @@ function broadcastNewEvents(prevCount) {
 app.post('/api/register', (req, res) => {
   const { name, role, isPlayer } = req.body;
   if (!name || !role) return res.json({ success: false, error: 'name and role required' });
-  const prevCount = world.eventLog.length;
+  const prevCount = world.eventCount;
   const result = world.register(name, role, !!isPlayer);
   // If a human is taking over a character that already has an AI subprocess
   // running, kill it now so the two don't compete for the same character.
@@ -86,7 +94,7 @@ app.post('/api/action', async (req, res) => {
     }
   }
 
-  const prevCount = world.eventLog.length;
+  const prevCount = world.eventCount;
   let result;
   switch (action) {
     case 'look':     result = world.look(agentId); break;
@@ -120,7 +128,7 @@ app.get('/api/world', (req, res) => {
 app.post('/api/deregister', (req, res) => {
   const { agentId } = req.body;
   if (!agentId) return res.json({ success: false, error: 'agentId required' });
-  const prevCount = world.eventLog.length;
+  const prevCount = world.eventCount;
   const result = world.deregister(agentId);
   broadcastNewEvents(prevCount);
   broadcast({ type: 'state', state: world.getState() });
@@ -140,7 +148,7 @@ app.post('/api/pause', (req, res) => {
 
 app.post('/api/reset', (req, res) => {
   const { agentId } = req.body;
-  const prevCount = world.eventLog.length;
+  const prevCount = world.eventCount;
   const result = agentId ? world.resetAgent(agentId) : world.resetAll();
   broadcastNewEvents(prevCount);
   broadcast({ type: 'state', state: world.getState() });
@@ -202,7 +210,7 @@ app.delete('/api/characters', (req, res) => {
         .filter(f => f.endsWith('.json'))
         .forEach(f => fs.unlinkSync(path.join(CHARACTERS_DIR, f)));
     }
-    const prevCount = world.eventLog.length;
+    const prevCount = world.eventCount;
     world.resetAll();
     broadcastNewEvents(prevCount);
     broadcast({ type: 'state', state: world.getState() });
@@ -417,7 +425,7 @@ setInterval(() => broadcast({ type: 'state', state: world.getState() }), 5000);
 // Watch for AI agent processes that died — mark them inactive and tell
 // everybody so the UI can show a disconnect.
 setInterval(() => {
-  const prevCount = world.eventLog.length;
+  const prevCount = world.eventCount;
   const dropped   = world.checkAgentHealth();
   if (dropped.length) {
     broadcastNewEvents(prevCount);

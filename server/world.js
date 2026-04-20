@@ -20,10 +20,13 @@ const LOCATIONS = {
 const LOCATION_IDS = Object.keys(LOCATIONS);
 
 class World {
-  constructor() {
+  constructor(opts = {}) {
     this.tick = 0;
     this.agents = {};     // id -> agent object
     this.eventLog = [];   // recent world events (capped at 200)
+    this.eventCount = 0;  // monotonic total of events ever logged. Used by the
+                          // broadcast layer to compute "what's new since X"
+                          // correctly even after the cap rotates eventLog.
     this.messages = {};   // locationId -> [{speaker, agentId, text, tick}]  (last 20 per location)
     this.whispers = {};   // targetId -> [{from, text, tick}]
     this.pids = {};       // agentId -> pid (for killing processes on reset)
@@ -32,9 +35,12 @@ class World {
     // Init message buckets
     for (const loc of LOCATION_IDS) this.messages[loc] = [];
 
-    this.loadState();
-
-    this.saveInterval = setInterval(() => this.saveState(), 30000);
+    // Tests pass { load: false, persist: false } so they get an isolated world
+    // that doesn't read or write characters/world_state.json.
+    if (opts.load !== false) this.loadState();
+    if (opts.persist !== false) {
+      this.saveInterval = setInterval(() => this.saveState(), 30000);
+    }
   }
 
   // ─── Persistence ────────────────────────────────────────────────────────────
@@ -56,6 +62,9 @@ class World {
         for (const id of Object.keys(this.agents)) {
           this.agents[id].active = false;
         }
+        // Re-anchor the monotonic counter so broadcast deltas (eventCount -
+        // prevCount) line up with eventLog after a restart.
+        this.eventCount = this.eventLog.length;
         console.log(`[World] Loaded state: ${Object.keys(this.agents).length} agents (awaiting launch)`);
       }
     } catch (err) {
@@ -84,6 +93,7 @@ class World {
     const entry = { type, text, agentId, locationId, tick: this.tick, ts: Date.now() };
     this.eventLog.push(entry);
     if (this.eventLog.length > 200) this.eventLog.shift();
+    this.eventCount++;
     return entry;
   }
 
