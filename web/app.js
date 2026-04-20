@@ -40,6 +40,9 @@ const LaunchProgress = { pending: null };
 // World-pause state: true while the player is composing a message. AI actions
 // that affect others (move/speak/shout/whisper) are gated server-side.
 let worldPaused = false;
+// Heartbeat that re-asserts the pause every few seconds while composing, so
+// the server's short pause TTL self-heals if a request is ever lost.
+let pauseHeartbeat = null;
 
 // ─── Boot ──────────────────────────────────────────────────────────────────────
 
@@ -584,13 +587,47 @@ async function doLaunch({ selectedName, selectedRole, allCharacters }) {
 
 function showLaunchingOverlay(expectedIds) {
   LaunchProgress.pending = {
-    expectedIds: new Set(expectedIds),
-    joined:      new Set(),
-    resolver:    null,
-    timer:       null,
+    expectedIds:   new Set(expectedIds),
+    joined:        new Set(),
+    statusByAgent: {},   // id -> { name, role, status, ageMs }
+    openedAt:      Date.now(),
+    resolver:      null,
+    timer:         null,
+    pollTimer:     null,
   };
   document.getElementById('setup-overlay').classList.remove('hidden');
   renderLaunchingOverlay();
+  startLaunchStatusPoll();
+}
+
+function startLaunchStatusPoll() {
+  const p = LaunchProgress.pending;
+  if (!p || p.pollTimer) return;
+  // Poll immediately, then every 2s. The endpoint is cheap (PID file + state
+  // lookup) and the loop self-stops as soon as the overlay is hidden.
+  const tick = async () => {
+    const cur = LaunchProgress.pending;
+    if (!cur) return;
+    try {
+      const data = await apiFetch('/api/game/status');
+      const map = {};
+      for (const a of (data.agents || [])) map[a.id] = a;
+      cur.statusByAgent = map;
+      // If polling sees all expected agents joined, resolve the wait — the
+      // join WebSocket events may have been missed (e.g. WS reconnected).
+      const total = cur.expectedIds.size;
+      const joined = [...cur.expectedIds].filter(id => map[id] && map[id].status === 'joined').length;
+      renderLaunchingOverlay();
+      if (total > 0 && joined >= total && cur.resolver) {
+        const done = cur.resolver;
+        cur.resolver = null;
+        if (cur.timer) clearTimeout(cur.timer);
+        done(true);
+      }
+    } catch {}
+  };
+  tick();
+  p.pollTimer = setInterval(tick, 2_000);
 }
 
 function renderLaunchingOverlay() {
@@ -601,29 +638,86 @@ function renderLaunchingOverlay() {
   if (!body) return;
   if (label) label.textContent = 'Waking up the town';
 
-  const done   = p.joined.size;
-  const total  = p.expectedIds.size;
-  const ratio  = total > 0 ? Math.min(1, done / total) : 1;
+  const expected = [...p.expectedIds];
+  const total    = expected.length;
+
+  // Prefer server-reported status. Fall back to "joined" set we built from
+  // join events for any id the server hasn't surfaced yet.
+  const rows = expected.map(id => {
+    const s = p.statusByAgent[id];
+    if (s) return s;
+    return {
+      id, name: id, role: '',
+      status: p.joined.has(id) ? 'joined' : 'pending',
+      ageMs:  0,
+    };
+  });
+
+  const joinedCount = rows.filter(r => r.status === 'joined').length;
+  const failedCount = rows.filter(r => r.status === 'failed').length;
+  const ratio  = total > 0 ? Math.min(1, joinedCount / total) : 1;
   const pct    = Math.round(ratio * 100);
-  const status = total === 0
+
+  const subtitle = total === 0
     ? 'No AI agents to wait for — opening town…'
-    : (done >= total
+    : (joinedCount >= total
         ? 'All agents connected. Opening town…'
         : 'A fresh Claude CLI cold-start runs 30-60s per agent. Grab a coffee.');
 
+  const failedNote = failedCount > 0
+    ? `<div class="launching-warn">⚠ ${failedCount} agent${failedCount === 1 ? '' : 's'} closed before joining. Use "Continue anyway" to proceed without them.</div>`
+    : '';
+
+  const STATUS_BADGE = {
+    pending: { icon: '·',  label: 'starting…',     cls: 'pending' },
+    spawned: { icon: '⏳', label: 'connecting…',   cls: 'spawned' },
+    joined:  { icon: '✓',  label: 'joined',        cls: 'joined'  },
+    failed:  { icon: '✗',  label: 'closed early',  cls: 'failed'  },
+  };
+
+  const list = rows.map(r => {
+    const b = STATUS_BADGE[r.status] || STATUS_BADGE.pending;
+    const ageStr = r.status === 'spawned' && r.ageMs > 1000
+      ? ` <span class="agent-age">${Math.round(r.ageMs / 1000)}s</span>`
+      : '';
+    const role = r.role ? `<span class="agent-role">${escHtml(r.role)}</span>` : '';
+    return `
+      <div class="agent-row ${b.cls}">
+        <span class="agent-icon">${b.icon}</span>
+        <span class="agent-name">${escHtml(r.name)}</span>
+        ${role}
+        <span class="agent-status">${b.label}${ageStr}</span>
+      </div>
+    `;
+  }).join('');
+
   body.innerHTML = `
     <div class="setup-launching">
-      <div class="spinner large"></div>
-      <div class="launching-title">${done} / ${total} agent${total === 1 ? '' : 's'} connected</div>
+      <div class="launching-title">${joinedCount} / ${total} agent${total === 1 ? '' : 's'} ready</div>
       <div class="launching-progress"><div class="launching-bar" style="width:${pct}%"></div></div>
-      <div class="launching-sub">${status}</div>
+      <div class="agent-list">${list}</div>
+      <div class="launching-sub">${subtitle}</div>
+      ${failedNote}
+      <button id="launching-continue-btn" class="btn-secondary">Continue anyway →</button>
     </div>
   `;
+
+  const cont = document.getElementById('launching-continue-btn');
+  if (cont) cont.onclick = () => {
+    const cur = LaunchProgress.pending;
+    if (cur && cur.resolver) {
+      const done = cur.resolver;
+      cur.resolver = null;
+      if (cur.timer) clearTimeout(cur.timer);
+      done(true);
+    }
+  };
 }
 
 function hideLaunchingOverlay() {
   if (!LaunchProgress.pending) return;
-  if (LaunchProgress.pending.timer) clearTimeout(LaunchProgress.pending.timer);
+  if (LaunchProgress.pending.timer)     clearTimeout(LaunchProgress.pending.timer);
+  if (LaunchProgress.pending.pollTimer) clearInterval(LaunchProgress.pending.pollTimer);
   LaunchProgress.pending = null;
 }
 
@@ -647,6 +741,10 @@ function recordJoinForLaunch(entry) {
   // join event and any re-registration noise.
   if (!p.expectedIds.has(entry.agentId)) return;
   if (p.joined.has(entry.agentId)) return;
+  // Reject historical joins replayed from world_state.json on first load.
+  // Anything stamped before this overlay opened is from a previous session.
+  // (Server and client share a clock — both run on the same machine.)
+  if (entry.ts && entry.ts < p.openedAt - 1000) return;
   p.joined.add(entry.agentId);
   renderLaunchingOverlay();
   if (p.joined.size >= p.expectedIds.size && p.resolver) {
@@ -682,11 +780,32 @@ function connectWS() {
       const msg = JSON.parse(e.data);
       if (msg.type === 'state') {
         App.worldState = msg.state;
+        // Reconcile local pause flag with server truth in case a /api/pause
+        // request was lost or arrived out of order. Don't downgrade to false
+        // while the user is actively composing — the next heartbeat will
+        // re-pause within a couple of seconds.
+        if (msg.state && Object.prototype.hasOwnProperty.call(msg.state, 'pause')) {
+          const serverPaused = !!msg.state.pause;
+          if (worldPaused && !serverPaused && !isComposing()) {
+            worldPaused = false;
+            stopPauseHeartbeat();
+            renderPauseIndicator();
+          }
+        }
         render(msg.state);
         updatePlayerPanel(msg.state);
       }
       if (msg.type === 'event' && msg.event) {
         appendEvent(msg.event);
+      }
+      if (msg.type === 'pause') {
+        // Server-driven update (e.g. another action auto-cleared the pause).
+        const serverPaused = !!msg.paused;
+        if (worldPaused && !serverPaused && !isComposing()) {
+          worldPaused = false;
+          stopPauseHeartbeat();
+          renderPauseIndicator();
+        }
       }
     } catch {}
   };
@@ -1189,34 +1308,62 @@ async function playerAction(action, args = {}) {
 // ─── World pause (active while player is composing) ──────────────────────────
 
 async function pauseWorld() {
-  if (worldPaused || !App.playerId) return;
+  if (!App.playerId) return;
+  const wasPaused = worldPaused;
   worldPaused = true;
-  renderPauseIndicator();
+  if (!wasPaused) renderPauseIndicator();
+  startPauseHeartbeat();
   try {
     await apiFetch('/api/pause', 'POST', { paused: true, holderId: App.playerId });
   } catch (err) { console.warn('pause failed:', err); }
 }
 
 async function resumeWorld() {
-  if (!worldPaused) return;
+  // Always send the resume to the server, even if we think we're not paused —
+  // we may be reconciling a stuck server-side pause from a lost request.
+  const wasPaused = worldPaused;
   worldPaused = false;
-  renderPauseIndicator();
+  stopPauseHeartbeat();
+  if (wasPaused) renderPauseIndicator();
   try {
     await apiFetch('/api/pause', 'POST', { paused: false, holderId: App.playerId });
   } catch (err) { console.warn('resume failed:', err); }
+}
+
+function startPauseHeartbeat() {
+  if (pauseHeartbeat) return;
+  // Server pause TTL is 15s; refresh every 5s so it never lapses while the
+  // user is still composing.
+  pauseHeartbeat = setInterval(() => {
+    if (!worldPaused || !App.playerId || !isComposing()) {
+      stopPauseHeartbeat();
+      return;
+    }
+    apiFetch('/api/pause', 'POST', { paused: true, holderId: App.playerId })
+      .catch(err => console.warn('pause heartbeat failed:', err));
+  }, 5_000);
+}
+
+function stopPauseHeartbeat() {
+  if (pauseHeartbeat) { clearInterval(pauseHeartbeat); pauseHeartbeat = null; }
+}
+
+function isComposing() {
+  const sayInput = document.getElementById('say-input');
+  const whInput  = document.getElementById('whisper-input');
+  const whTarget = document.getElementById('whisper-target');
+  return Boolean(
+    (sayInput && sayInput.value.trim().length > 0) ||
+    (whInput  && whInput.value.trim().length  > 0) ||
+    (whTarget && whTarget.value)
+  );
 }
 
 // Inspect current input state and pause/resume accordingly. Called on every
 // input/blur/change event on the composing widgets.
 function syncPauseState() {
   if (!App.playerId) { if (worldPaused) resumeWorld(); return; }
-  const sayInput = document.getElementById('say-input');
-  const whInput  = document.getElementById('whisper-input');
-  const whTarget = document.getElementById('whisper-target');
-  const composing =
-    (sayInput && sayInput.value.trim().length > 0) ||
-    (whInput  && whInput.value.trim().length  > 0) ||
-    (whTarget && whTarget.value);
+  const composing = isComposing();
   if (composing && !worldPaused) pauseWorld();
   else if (!composing && worldPaused) resumeWorld();
 }

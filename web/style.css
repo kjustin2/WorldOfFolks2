@@ -378,6 +378,48 @@ html, body {
 }
 .launching-title { font-size: 1rem; font-weight: 600; color: var(--cyan); }
 .launching-sub   { font-size: 0.85rem; color: var(--dim); }
+.launching-warn  { font-size: 0.85rem; color: #f0ad4e; max-width: 320px; }
+
+.agent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 360px;
+  margin-top: 4px;
+}
+.agent-row {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.03);
+  font-size: 0.9rem;
+  text-align: left;
+}
+.agent-row .agent-icon { text-align: center; }
+.agent-row .agent-name { font-weight: 600; }
+.agent-row .agent-role {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--dim);
+  grid-column: 2;
+  margin-top: -2px;
+}
+.agent-row .agent-status { font-size: 0.8rem; color: var(--dim); }
+.agent-row .agent-age    { color: #888; margin-left: 4px; }
+.agent-row.joined  .agent-icon  { color: #6ae37a; }
+.agent-row.joined  .agent-status{ color: #6ae37a; }
+.agent-row.spawned .agent-icon  { color: #3ab0ff; }
+.agent-row.failed  .agent-icon  { color: #d9534f; }
+.agent-row.failed  .agent-status{ color: #d9534f; }
+.agent-row.pending .agent-icon  { color: var(--dim); }
+
+#launching-continue-btn {
+  margin-top: 8px;
+}
 
 /* ── Header ──────────────────────────────────────────────────────────────────── */
 

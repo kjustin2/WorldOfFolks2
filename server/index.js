@@ -101,6 +101,13 @@ app.post('/api/action', async (req, res) => {
       result = { success: false, error: `Unknown action: ${action}` };
   }
 
+  // If the player was holding the pause and just took a non-passive action,
+  // they're done composing — clear the pause now so a dropped /api/pause
+  // resume request can't leave the world frozen.
+  if (!PASSIVE_ACTIONS.has(action) && world.clearPauseFor(agentId)) {
+    broadcast({ type: 'pause', paused: false });
+  }
+
   broadcastNewEvents(prevCount);
   broadcast({ type: 'state', state: world.getState() });
   res.json(result);
@@ -209,6 +216,10 @@ app.delete('/api/characters', (req, res) => {
 
 let launchedAgentNames = [];
 let agentsLaunched     = false;
+// Detailed per-agent expectations from the most recent /api/game/launch.
+// Used by /api/game/status so the dashboard can show pending → spawned →
+// joined / failed for each AI character instead of one opaque progress bar.
+let expectedAIAgents = []; // [{id, name, role, spawnedAt}]
 
 function killAgentTerminals() {
   const PIDS_DIR = path.join(ROOT, 'characters', '.pids');
@@ -245,6 +256,7 @@ function killAgentTerminals() {
 
   launchedAgentNames = [];
   agentsLaunched     = false;
+  expectedAIAgents   = [];
 }
 
 // Kill the AI subprocess (and its terminal window on Windows) for one agent.
@@ -296,6 +308,12 @@ app.post('/api/game/launch', (req, res) => {
 
   launchedAgentNames = aiChars.map(p => p.name);
   agentsLaunched     = true;
+  expectedAIAgents   = aiChars.map(p => ({
+    id:        p.name.toLowerCase().replace(/\s+/g, '_'),
+    name:      p.name,
+    role:      p.role,
+    spawnedAt: Date.now(),
+  }));
 
   const launcher = spawn('node', ['launch.js'], {
     cwd:   ROOT,
@@ -314,7 +332,42 @@ app.post('/api/game/launch', (req, res) => {
 
 app.post('/api/game/stop', (req, res) => {
   killAgentTerminals();
+  expectedAIAgents = [];
   res.json({ success: true });
+});
+
+// Per-agent launch status — drives the loading overlay so users see exactly
+// which AI agents have spawned, joined, or failed instead of an opaque bar.
+//   pending — terminal hasn't written its pid yet (or never spawned)
+//   spawned — terminal is alive, Claude CLI cold-starting (~30-60s)
+//   joined  — agent has registered with the world and is live
+//   failed  — pid existed but the process is gone (terminal closed early)
+app.get('/api/game/status', (req, res) => {
+  const PIDS_DIR = path.join(ROOT, 'characters', '.pids');
+  const now = Date.now();
+  const agents = expectedAIAgents.map(a => {
+    const pidFile = path.join(PIDS_DIR, `${a.id}.pid`);
+    let pidExists = false;
+    let pidAlive  = false;
+    if (fs.existsSync(pidFile)) {
+      pidExists = true;
+      try {
+        const pid = parseInt(fs.readFileSync(pidFile, 'utf8').trim(), 10);
+        if (pid) {
+          try { process.kill(pid, 0); pidAlive = true; } catch {}
+        }
+      } catch {}
+    }
+    const worldAgent = world.agents[a.id];
+    const joined = !!(worldAgent && worldAgent.active);
+    let status;
+    if (joined)         status = 'joined';
+    else if (pidAlive)  status = 'spawned';
+    else if (pidExists) status = 'failed';
+    else                status = 'pending';
+    return { id: a.id, name: a.name, role: a.role, status, ageMs: now - a.spawnedAt };
+  });
+  res.json({ agents });
 });
 
 // ─── WebSocket ────────────────────────────────────────────────────────────────

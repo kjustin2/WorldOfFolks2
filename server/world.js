@@ -335,7 +335,10 @@ class World {
 
   // ─── World pause (player is composing — freeze AI actions that affect others) ─
 
-  pause(holderId, ttlMs = 2 * 60_000) {
+  // TTL is short on purpose: the client refreshes this every few seconds while
+  // the player is actively composing. A short ceiling means a stuck pause
+  // (e.g. dropped resume request) self-heals in ~15s instead of 2 minutes.
+  pause(holderId, ttlMs = 15_000) {
     this.worldPause = { holder: holderId || null, until: Date.now() + ttlMs };
     return { success: true, until: this.worldPause.until };
   }
@@ -347,6 +350,17 @@ class World {
     }
     this.worldPause = null;
     return { success: true };
+  }
+
+  // Called by the action handler after the pause holder takes any action.
+  // The holder finishing an action means they're no longer composing, so we
+  // clear the pause unconditionally. Returns true if a pause was cleared
+  // (so the server can broadcast the new pause state).
+  clearPauseFor(agentId) {
+    if (!this.worldPause) return false;
+    if (this.worldPause.holder && this.worldPause.holder !== agentId) return false;
+    this.worldPause = null;
+    return true;
   }
 
   // True if AI action by `agentId` should wait for the world to unpause.
@@ -399,12 +413,21 @@ class World {
   // ─── World State (for dashboard) ─────────────────────────────────────────────
 
   getState() {
+    // Surface pause state so the dashboard can reconcile with server truth
+    // (in case a /api/pause request was lost or arrived out of order).
+    let pause = null;
+    if (this.worldPause && this.worldPause.until > Date.now()) {
+      pause = { holder: this.worldPause.holder, until: this.worldPause.until };
+    } else if (this.worldPause) {
+      this.worldPause = null;
+    }
     return {
       tick:      this.tick,
       agents:    this.agents,
       locations: LOCATIONS,
       eventLog:  this.eventLog.slice(-50),
       messages:  this.messages,
+      pause,
     };
   }
 
