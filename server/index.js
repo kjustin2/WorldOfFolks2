@@ -126,6 +126,60 @@ app.get('/api/world', (req, res) => {
   res.json(world.getState());
 });
 
+// Hand a player-controlled character back to AI control. Called when the
+// player clicks "Stop playing" or "Play as <someone else>" so the abandoned
+// character doesn't disappear from the world — instead an AI takes over.
+//
+// Steps: flip the world flag → flip the on-disk profile so a future restart
+// agrees → reset the supervisor throttle (the player swap shouldn't burn
+// through restart attempts) → spawn launch.js --retry <id>.
+app.post('/api/player/release', (req, res) => {
+  const { agentId } = req.body || {};
+  if (!agentId) return res.json({ success: false, error: 'agentId required' });
+
+  const result = world.releaseFromPlayer(agentId);
+  if (!result.success) return res.json(result);
+  const agent = result.agent;
+
+  // Update the on-disk profile so a future cold restart matches in-memory state.
+  try {
+    const profiles = loadAllProfiles();
+    const profile  = profiles.find(p => p.name === agent.name);
+    if (profile) {
+      profile.isPlayer = false;
+      saveProfile(profile);
+    }
+  } catch (err) {
+    console.warn('[release] failed to update profile:', err.message);
+  }
+
+  // Make sure /api/game/status surfaces this agent during its cold-start.
+  const existing = expectedAIAgents.find(a => a.id === agentId);
+  if (existing) existing.spawnedAt = Date.now();
+  else expectedAIAgents.push({
+    id: agentId, name: agent.name, role: agent.role, spawnedAt: Date.now(),
+  });
+
+  // A swap shouldn't count against the supervisor's restart budget.
+  supervisorRestarts.reset(agentId);
+
+  // Clear any stale PID file from a prior life so the spawn check is clean.
+  const pidFile = path.join(ROOT, 'characters', '.pids', `${agentId}.pid`);
+  try { if (fs.existsSync(pidFile)) fs.unlinkSync(pidFile); } catch {}
+
+  console.log(`[release] Spawning AI for ${agent.name}`);
+  const launcher = spawn('node', ['launch.js', '--retry', agentId], {
+    cwd:   ROOT,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env:   { ...process.env, MANAGED: 'true' },
+  });
+  launcher.stdout.on('data', d => process.stdout.write(d));
+  launcher.stderr.on('data', d => process.stderr.write(d));
+
+  broadcast({ type: 'state', state: world.getState() });
+  res.json({ success: true });
+});
+
 app.post('/api/deregister', (req, res) => {
   const { agentId } = req.body;
   if (!agentId) return res.json({ success: false, error: 'agentId required' });
@@ -433,7 +487,10 @@ setInterval(() => broadcast({ type: 'state', state: world.getState() }), 5000);
 // In both cases, attemptRestart() respawns the agent via launch.js --retry,
 // throttled by RestartTracker so a permanently-broken agent doesn't loop.
 
-const STALL_THRESHOLD_MS = 90_000;     // 90s with no actions = wedged
+const STALL_THRESHOLD_MS = 120_000;    // 120s with no actions = wedged.
+                                       // Generous on purpose — a respawned
+                                       // agent's Claude CLI cold-start can
+                                       // take 30-60s before the first action.
 const supervisorRestarts = new RestartTracker({ windowMs: 5 * 60_000, limit: 3 });
 
 function attemptRestart(agentId, reason) {

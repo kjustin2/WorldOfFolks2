@@ -977,6 +977,15 @@ function renderCharacters(agents, dropped = []) {
       const name = btn.dataset.name;
       const role = btn.dataset.role;
       try {
+        // If we're already playing someone, release them first so they get an
+        // AI rather than vanishing from the world during the swap.
+        if (App.playerId) {
+          const prev = App.playerId;
+          App.playerId   = null;
+          App.playerName = null;
+          apiFetch('/api/player/release', 'POST', { agentId: prev })
+            .catch(err => console.warn('release failed:', err));
+        }
         const data = await apiFetch('/api/register', 'POST', { name, role, isPlayer: true });
         if (data.success) {
           App.playerId   = data.agent.id;
@@ -1190,11 +1199,13 @@ function setupPlayerPanel() {
     };
   }
 
-  // Stop playing — return to observer mode
+  // Stop playing — return to observer mode AND hand the character back to AI
+  // (otherwise they'd silently disappear from the simulation forever).
   const stopBtn = document.getElementById('btn-stop-playing');
   if (stopBtn) {
     stopBtn.onclick = async () => {
       await resumeWorld();
+      const releasedId = App.playerId;
       App.playerId   = null;
       App.playerName = null;
       panel.classList.add('hidden');
@@ -1203,6 +1214,10 @@ function setupPlayerPanel() {
       const ob = document.getElementById('btn-observe');
       if (ob) ob.style.display = 'none';
       if (App.worldState) renderCharacters(Object.values(App.worldState.agents || {}).filter(a => a.active));
+      if (releasedId) {
+        apiFetch('/api/player/release', 'POST', { agentId: releasedId })
+          .catch(err => console.warn('release failed:', err));
+      }
     };
   }
 

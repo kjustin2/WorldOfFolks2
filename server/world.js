@@ -207,6 +207,24 @@ class World {
     return { success: true, agent };
   }
 
+  // Hand a player-controlled character back to AI control. Caller is
+  // responsible for updating the on-disk profile and spawning the agent
+  // subprocess; this just flips the in-memory bookkeeping so the supervisor
+  // and dashboard treat them as an AI again.
+  releaseFromPlayer(agentId) {
+    const agent = this.agents[agentId];
+    if (!agent) return { success: false, error: 'Unknown agent' };
+    if (!agent.isPlayer) return { success: false, error: 'Agent is not player-controlled' };
+
+    agent.isPlayer      = false;
+    agent.wasLaunchedAI = true;
+    // Reset the action clock so the supervisor's stall check gives the
+    // restarting AI a full window to cold-start before it gets flagged.
+    agent.lastActionAt  = Date.now();
+    this._log('player_release', `${agent.name} is back to being an AI`, agentId, agent.location);
+    return { success: true, agent };
+  }
+
   deregister(agentId) {
     const agent = this.agents[agentId];
     if (!agent) return { success: false, error: 'Unknown agent' };

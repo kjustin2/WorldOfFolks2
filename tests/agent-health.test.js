@@ -132,6 +132,45 @@ test('re-registering an agent resets lastActionAt (so a restart isn\'t instantly
   assert.strictEqual(w.getStalledAIAgents(90_000).length, 0, 'no longer stalled after re-register');
 });
 
+// ─── Player release / swap ───────────────────────────────────────────────────
+
+test('releaseFromPlayer flips a player-controlled agent back to AI', () => {
+  const w = makeWorld();
+  w.register('Justin', 'shopkeeper', /* isPlayer */ true);
+  assert.strictEqual(w.agents['justin'].isPlayer, true);
+  assert.strictEqual(w.agents['justin'].wasLaunchedAI, false);
+
+  const r = w.releaseFromPlayer('justin');
+  assert.strictEqual(r.success, true);
+  assert.strictEqual(w.agents['justin'].isPlayer, false);
+  assert.strictEqual(w.agents['justin'].wasLaunchedAI, true,
+    'wasLaunchedAI flips so checkAgentHealth treats them as a real AI');
+});
+
+test('releaseFromPlayer rejects an agent that isn\'t player-controlled', () => {
+  const w = makeWorld();
+  w.register('Alex', 'musician'); // AI agent
+  const r = w.releaseFromPlayer('alex');
+  assert.strictEqual(r.success, false);
+});
+
+test('releaseFromPlayer rejects an unknown agent', () => {
+  const w = makeWorld();
+  const r = w.releaseFromPlayer('ghost');
+  assert.strictEqual(r.success, false);
+});
+
+test('after release the agent is considered stallable like any other AI', () => {
+  const w = makeWorld();
+  w.register('Justin', 'shopkeeper', true);
+  w.releaseFromPlayer('justin');
+  // Pretend the AI subprocess never registered and a long time passed.
+  w.agents['justin'].lastActionAt = Date.now() - 200_000;
+  const stalled = w.getStalledAIAgents(120_000);
+  assert.strictEqual(stalled.length, 1);
+  assert.strictEqual(stalled[0].id, 'justin');
+});
+
 if (failed) {
   console.log(`\n${failed} test(s) failed.`);
   process.exit(1);
