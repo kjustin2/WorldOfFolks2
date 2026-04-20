@@ -171,6 +171,19 @@ async function main() {
     return;
   }
 
+  // Retry mode: re-launch a single agent by id (called by the dashboard's
+  // retry button after the first spawn silently failed on Windows).
+  if (process.argv[2] === '--retry') {
+    const safeId = process.argv[3];
+    if (!safeId) { console.error('Missing agent id'); process.exit(1); }
+    const profile = loadProfiles().find(p =>
+      p.name.toLowerCase().replace(/\s+/g, '_') === safeId
+    );
+    if (!profile) { console.error(`No profile for ${safeId}`); process.exit(1); }
+    launchAgent(profile);
+    process.exit(0);
+  }
+
   console.log(`
 ╔═══════════════════════════════════════════════╗
 ║        WorldOfFolks 2 — Agent Launcher        ║

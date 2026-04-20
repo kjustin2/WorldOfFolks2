@@ -415,7 +415,31 @@ html, body {
 .agent-row.spawned .agent-icon  { color: #3ab0ff; }
 .agent-row.failed  .agent-icon  { color: #d9534f; }
 .agent-row.failed  .agent-status{ color: #d9534f; }
+.agent-row.stuck   .agent-icon  { color: #f0ad4e; }
+.agent-row.stuck   .agent-status{ color: #f0ad4e; }
 .agent-row.pending .agent-icon  { color: var(--dim); }
+
+.agent-retry-btn {
+  grid-column: 4;
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border: 1px solid #f0ad4e;
+  background: transparent;
+  color: #f0ad4e;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.agent-retry-btn:hover:not(:disabled) {
+  background: rgba(240, 173, 78, 0.15);
+}
+.agent-retry-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.agent-row {
+  /* Widen grid to fit a retry button in the trailing column. */
+  grid-template-columns: 20px 1fr auto auto;
+}
 
 #launching-continue-btn {
   margin-top: 8px;

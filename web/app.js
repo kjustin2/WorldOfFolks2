@@ -653,8 +653,9 @@ function renderLaunchingOverlay() {
     };
   });
 
-  const joinedCount = rows.filter(r => r.status === 'joined').length;
-  const failedCount = rows.filter(r => r.status === 'failed').length;
+  const joinedCount   = rows.filter(r => r.status === 'joined').length;
+  const failedCount   = rows.filter(r => r.status === 'failed').length;
+  const stuckCount    = rows.filter(r => r.status === 'stuck').length;
   const ratio  = total > 0 ? Math.min(1, joinedCount / total) : 1;
   const pct    = Math.round(ratio * 100);
 
@@ -664,8 +665,11 @@ function renderLaunchingOverlay() {
         ? 'All agents connected. Opening town…'
         : 'A fresh Claude CLI cold-start runs 30-60s per agent. Grab a coffee.');
 
-  const failedNote = failedCount > 0
-    ? `<div class="launching-warn">⚠ ${failedCount} agent${failedCount === 1 ? '' : 's'} closed before joining. Use "Continue anyway" to proceed without them.</div>`
+  const warnPieces = [];
+  if (stuckCount > 0)  warnPieces.push(`${stuckCount} agent${stuckCount === 1 ? '' : 's'} didn't open a terminal — click Retry, or continue without them.`);
+  if (failedCount > 0) warnPieces.push(`${failedCount} agent${failedCount === 1 ? '' : 's'} closed before joining.`);
+  const failedNote = warnPieces.length
+    ? `<div class="launching-warn">⚠ ${warnPieces.join(' ')}</div>`
     : '';
 
   const STATUS_BADGE = {
@@ -673,20 +677,25 @@ function renderLaunchingOverlay() {
     spawned: { icon: '⏳', label: 'connecting…',   cls: 'spawned' },
     joined:  { icon: '✓',  label: 'joined',        cls: 'joined'  },
     failed:  { icon: '✗',  label: 'closed early',  cls: 'failed'  },
+    stuck:   { icon: '⚠',  label: 'spawn failed',  cls: 'stuck'   },
   };
 
   const list = rows.map(r => {
     const b = STATUS_BADGE[r.status] || STATUS_BADGE.pending;
-    const ageStr = r.status === 'spawned' && r.ageMs > 1000
+    const ageStr = (r.status === 'spawned' || r.status === 'pending') && r.ageMs > 1000
       ? ` <span class="agent-age">${Math.round(r.ageMs / 1000)}s</span>`
       : '';
     const role = r.role ? `<span class="agent-role">${escHtml(r.role)}</span>` : '';
+    const retry = (r.status === 'stuck' || r.status === 'failed')
+      ? `<button class="agent-retry-btn" data-id="${escHtml(r.id)}">Retry</button>`
+      : '';
     return `
       <div class="agent-row ${b.cls}">
         <span class="agent-icon">${b.icon}</span>
         <span class="agent-name">${escHtml(r.name)}</span>
         ${role}
         <span class="agent-status">${b.label}${ageStr}</span>
+        ${retry}
       </div>
     `;
   }).join('');
@@ -712,6 +721,28 @@ function renderLaunchingOverlay() {
       done(true);
     }
   };
+
+  body.querySelectorAll('.agent-retry-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.dataset.id;
+      btn.disabled = true;
+      btn.textContent = 'Retrying…';
+      try {
+        const r = await apiFetch('/api/game/retry-agent', 'POST', { agentId: id });
+        if (!r || !r.success) {
+          btn.disabled = false;
+          btn.textContent = 'Retry';
+          alert('Retry failed: ' + (r && r.error ? r.error : 'unknown'));
+        }
+        // The next status poll (≤2s away) will re-render the row in its
+        // updated state, replacing this disabled button.
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Retry';
+        alert('Retry failed: ' + err.message);
+      }
+    };
+  });
 }
 
 function hideLaunchingOverlay() {

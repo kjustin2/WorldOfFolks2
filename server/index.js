@@ -338,10 +338,14 @@ app.post('/api/game/stop', (req, res) => {
 
 // Per-agent launch status — drives the loading overlay so users see exactly
 // which AI agents have spawned, joined, or failed instead of an opaque bar.
-//   pending — terminal hasn't written its pid yet (or never spawned)
+//   pending — terminal hasn't written its pid yet (still in startup window)
+//   stuck   — pending past the threshold; the spawn likely failed silently
+//             (Windows `cmd /c start` can drop a window with no error). The
+//             dashboard surfaces a Retry button for this state.
 //   spawned — terminal is alive, Claude CLI cold-starting (~30-60s)
 //   joined  — agent has registered with the world and is live
 //   failed  — pid existed but the process is gone (terminal closed early)
+const STUCK_THRESHOLD_MS = 15_000;
 app.get('/api/game/status', (req, res) => {
   const PIDS_DIR = path.join(ROOT, 'characters', '.pids');
   const now = Date.now();
@@ -360,14 +364,46 @@ app.get('/api/game/status', (req, res) => {
     }
     const worldAgent = world.agents[a.id];
     const joined = !!(worldAgent && worldAgent.active);
+    const ageMs  = now - a.spawnedAt;
     let status;
     if (joined)         status = 'joined';
     else if (pidAlive)  status = 'spawned';
     else if (pidExists) status = 'failed';
+    else if (ageMs > STUCK_THRESHOLD_MS) status = 'stuck';
     else                status = 'pending';
-    return { id: a.id, name: a.name, role: a.role, status, ageMs: now - a.spawnedAt };
+    return { id: a.id, name: a.name, role: a.role, status, ageMs };
   });
   res.json({ agents });
+});
+
+// Re-launch a single agent that failed to start (or got stuck during spawn).
+app.post('/api/game/retry-agent', (req, res) => {
+  const { agentId } = req.body || {};
+  if (!agentId) return res.json({ success: false, error: 'agentId required' });
+
+  const expected = expectedAIAgents.find(a => a.id === agentId);
+  if (!expected) {
+    return res.json({ success: false, error: 'Agent is not in the launch set' });
+  }
+
+  // Clear any stale PID file from the previous attempt so the status check
+  // returns to "pending" cleanly while the retry comes up.
+  const PIDS_DIR = path.join(ROOT, 'characters', '.pids');
+  const pidFile  = path.join(PIDS_DIR, `${agentId}.pid`);
+  try { if (fs.existsSync(pidFile)) fs.unlinkSync(pidFile); } catch {}
+
+  // Reset the spawn clock so the stuck-threshold doesn't immediately fire.
+  expected.spawnedAt = Date.now();
+
+  const launcher = spawn('node', ['launch.js', '--retry', agentId], {
+    cwd:   ROOT,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env:   { ...process.env, MANAGED: 'true' },
+  });
+  launcher.stdout.on('data', d => process.stdout.write(d));
+  launcher.stderr.on('data', d => process.stderr.write(d));
+
+  res.json({ success: true });
 });
 
 // ─── WebSocket ────────────────────────────────────────────────────────────────
