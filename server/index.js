@@ -7,6 +7,7 @@ const path      = require('path');
 const fs        = require('fs');
 const { spawn } = require('child_process');
 const { World } = require('./world');
+const { RestartTracker } = require('./restart-tracker');
 const {
   parseDescription,
   getMissingFields,
@@ -422,12 +423,63 @@ wss.on('connection', (ws) => {
 
 setInterval(() => broadcast({ type: 'state', state: world.getState() }), 5000);
 
-// Watch for AI agent processes that died — mark them inactive and tell
-// everybody so the UI can show a disconnect.
+// ─── Agent supervisor ─────────────────────────────────────────────────────────
+// Two failure modes we watch for on a 10s tick:
+//   1. The agent's claude subprocess died (PID file points at a dead PID).
+//      Detected by world.checkAgentHealth().
+//   2. The subprocess is still alive but the agent hasn't called any action
+//      in STALL_THRESHOLD_MS — the Claude session hung, hit a rate limit, or
+//      the model decided it was "done". world.getStalledAIAgents() finds these.
+// In both cases, attemptRestart() respawns the agent via launch.js --retry,
+// throttled by RestartTracker so a permanently-broken agent doesn't loop.
+
+const STALL_THRESHOLD_MS = 90_000;     // 90s with no actions = wedged
+const supervisorRestarts = new RestartTracker({ windowMs: 5 * 60_000, limit: 3 });
+
+function attemptRestart(agentId, reason) {
+  const agent = world.agents[agentId];
+  if (!agent) return false;
+
+  if (!supervisorRestarts.attempt(agentId)) {
+    console.log(`[supervisor] ${agent.name}: restart limit reached (${reason}) — leaving offline`);
+    return false;
+  }
+
+  console.log(`[supervisor] Restarting ${agent.name} (${reason})`);
+  killAgentById(agentId, agent.name);
+  agent.active       = false;
+  agent.lastActionAt = Date.now(); // reset clock so we don't immediately re-detect
+
+  const launcher = spawn('node', ['launch.js', '--retry', agentId], {
+    cwd:   ROOT,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env:   { ...process.env, MANAGED: 'true' },
+  });
+  launcher.stdout.on('data', d => process.stdout.write(d));
+  launcher.stderr.on('data', d => process.stderr.write(d));
+  return true;
+}
+
+setInterval(() => broadcast({ type: 'state', state: world.getState() }), 5000);
+
 setInterval(() => {
   const prevCount = world.eventCount;
-  const dropped   = world.checkAgentHealth();
-  if (dropped.length) {
+  let changed     = false;
+
+  // 1. Dead processes (PID file points at a dead PID).
+  const dropped = world.checkAgentHealth();
+  for (const id of dropped) {
+    if (attemptRestart(id, 'process died')) changed = true;
+  }
+
+  // 2. Stalled (alive but silent for too long).
+  for (const a of world.getStalledAIAgents(STALL_THRESHOLD_MS)) {
+    a.active = false;
+    world._log('disconnect', `${a.name} stalled — attempting restart`, a.id, a.location);
+    if (attemptRestart(a.id, 'stalled')) changed = true;
+  }
+
+  if (changed || dropped.length) {
     broadcastNewEvents(prevCount);
     broadcast({ type: 'state', state: world.getState() });
   }

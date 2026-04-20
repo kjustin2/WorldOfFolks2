@@ -154,6 +154,24 @@ class World {
     return name.toLowerCase().replace(/\s+/g, '_');
   }
 
+  // Mark an agent as having just taken an action. Used for stall detection —
+  // an AI agent whose subprocess is alive but hasn't called any action in a
+  // long time is wedged (Claude CLI hung, rate-limited, lost session, etc.)
+  // and should be restarted.
+  _touch(agentId) {
+    const a = this.agents[agentId];
+    if (a) a.lastActionAt = Date.now();
+  }
+
+  // Returns AI agents (non-player) that are marked active but haven't acted
+  // within `thresholdMs`. The supervisor restarts these.
+  getStalledAIAgents(thresholdMs) {
+    const cutoff = Date.now() - thresholdMs;
+    return Object.values(this.agents).filter(a =>
+      a.active && !a.isPlayer && (a.lastActionAt || 0) < cutoff
+    );
+  }
+
   // ─── Actions ─────────────────────────────────────────────────────────────────
 
   register(name, role, isPlayer = false) {
@@ -163,8 +181,12 @@ class World {
       // existing character). Always refresh isPlayer so a takeover from the
       // observer "Play as" button correctly flips the flag — otherwise the
       // health check below would treat the player's character as a dead AI.
-      this.agents[id].active = true;
-      this.agents[id].isPlayer = isPlayer;
+      this.agents[id].active       = true;
+      this.agents[id].isPlayer     = isPlayer;
+      this.agents[id].lastActionAt = Date.now();
+      // If this re-register is an AI restart, remember it so a future missing
+      // pid file is treated as "process died" rather than "never launched".
+      if (!isPlayer) this.agents[id].wasLaunchedAI = true;
       this._log('join', `${name} returned to town`, id, this.agents[id].location);
       return { success: true, agent: this.agents[id] };
     }
@@ -176,7 +198,9 @@ class World {
       isPlayer,
       location: 'square',
       active: true,
-      joinedAt: Date.now(),
+      joinedAt:      Date.now(),
+      lastActionAt:  Date.now(),
+      wasLaunchedAI: !isPlayer, // see comment in checkAgentHealth
     };
     this.agents[id] = agent;
     this._log('join', `${name} (${role}) arrived in town`, id, 'square');
@@ -194,6 +218,7 @@ class World {
   look(agentId) {
     const agent = this.agents[agentId];
     if (!agent) return { success: false, error: 'Unknown agent' };
+    this._touch(agentId);
 
     const loc     = LOCATIONS[agent.location];
     const others  = this._agentsAt(agent.location).filter(a => a.id !== agentId);
@@ -222,6 +247,7 @@ class World {
   move(agentId, destination) {
     const agent = this.agents[agentId];
     if (!agent) return { success: false, error: 'Unknown agent' };
+    this._touch(agentId);
 
     const destId = this._resolveLocation(destination);
     if (!destId) {
@@ -257,6 +283,7 @@ class World {
     const agent = this.agents[agentId];
     if (!agent) return { success: false, error: 'Unknown agent' };
     if (!message || !message.trim()) return { success: false, error: 'Nothing to say.' };
+    this._touch(agentId);
 
     const text  = message.trim();
     const entry = { speaker: agent.name, agentId, text, tick: this.tick };
@@ -282,6 +309,7 @@ class World {
     const agent = this.agents[agentId];
     if (!agent) return { success: false, error: 'Unknown agent' };
     if (!message || !message.trim()) return { success: false, error: 'Nothing to shout.' };
+    this._touch(agentId);
 
     const text = message.trim();
     // Broadcast to ALL locations
@@ -299,6 +327,7 @@ class World {
     const agent  = this.agents[agentId];
     if (!agent) return { success: false, error: 'Unknown agent' };
     if (!message || !message.trim()) return { success: false, error: 'Nothing to whisper.' };
+    this._touch(agentId);
 
     const targetId = this._nameToId(targetName);
     const target   = this.agents[targetId];
@@ -326,6 +355,7 @@ class World {
   think(agentId, thought) {
     const agent = this.agents[agentId];
     if (!agent) return { success: false, error: 'Unknown agent' };
+    this._touch(agentId);
 
     this._log('think', `[${agent.name} thinks]: ${thought}`, agentId, agent.location);
     return { success: true, thought: thought.trim() };
@@ -334,6 +364,7 @@ class World {
   remember(agentId, text) {
     const agent = this.agents[agentId];
     if (!agent) return { success: false, error: 'Unknown agent' };
+    this._touch(agentId);
 
     if (!fs.existsSync(MEMORIES_DIR)) fs.mkdirSync(MEMORIES_DIR, { recursive: true });
     const file = path.join(MEMORIES_DIR, `${agentId}.txt`);
@@ -395,19 +426,25 @@ class World {
 
       const pidFile = path.join(PIDS_DIR, `${agent.id}.pid`);
 
-      // No pid file = no AI subprocess was launched for this agent in this
-      // session (e.g. registered manually, or via the player CLI). Don't
-      // declare them dead just because we can't find a pid to ping.
-      if (!fs.existsSync(pidFile)) continue;
-
-      let alive = false;
-      try {
-        const pid = parseInt(fs.readFileSync(pidFile, 'utf8').trim(), 10);
-        if (pid) {
-          try { process.kill(pid, 0); alive = true; }
-          catch { alive = false; }
-        }
-      } catch {}
+      // Only treat a missing PID file as "dead" if we know the agent was
+      // launched as an AI in this session (i.e. they've actually taken some
+      // action via /api/action — wasLaunchedAI is set there). Without that
+      // flag, this could be a hand-registered test agent that never had a
+      // pid in the first place.
+      let alive;
+      if (!fs.existsSync(pidFile)) {
+        if (!agent.wasLaunchedAI) continue;
+        alive = false;
+      } else {
+        alive = false;
+        try {
+          const pid = parseInt(fs.readFileSync(pidFile, 'utf8').trim(), 10);
+          if (pid) {
+            try { process.kill(pid, 0); alive = true; }
+            catch { alive = false; }
+          }
+        } catch {}
+      }
 
       if (!alive) {
         agent.active = false;
