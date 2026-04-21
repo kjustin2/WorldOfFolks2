@@ -37,32 +37,49 @@ function callClaude(prompt, maxTokens = 1500) {
 
 function parseDescription(rawDescription, existingProfile = null) {
   const existingJson = existingProfile ? JSON.stringify(existingProfile, null, 2) : 'null';
+  const hasBackstory = !!(existingProfile && existingProfile.backstory);
 
   const prompt = `You are helping build characters for a narrative simulation game called WorldOfFolks 2.
 
-The player has written a character description. Extract a structured profile from it.
+The player has written a character description. Extract a structured profile from it AND enrich it with vivid, dramatic detail so the character feels alive on arrival.
 
-${existingProfile ? `Here is the partially-built profile so far:\n${existingJson}\n\nNow incorporate the new information below into it.` : ''}
+${existingProfile ? `Here is the partially-built profile so far:\n${existingJson}\n\nIncorporate the new information below. Keep existing enriched fields (backstory, secret, relationships) unless the new information contradicts them — in which case update, don't wipe.` : ''}
 
 Player description:
 ---
 ${rawDescription}
 ---
 
-Return ONLY a valid JSON object (no markdown, no code fences, no extra text) with these fields:
-{
-  "name": "character's first name (string, required)",
-  "role": "their occupation or social role in a small town (string, required)",
-  "traits": ["array", "of", "personality", "traits", "required, at least 2"],
-  "wants": "what they're working toward or secretly hoping for (string, required)",
-  "flaw": "a weakness, blind spot, or internal contradiction (string, required)",
-  "backstory": "brief background if mentioned (string or null)",
-  "relationships": {"other_character_name": "nature of relationship (string or null if no other characters mentioned)"},
-  "secret": "something they haven't told anyone (string or null if not mentioned)"
-}
+REQUIRED fields (extract from the description; if genuinely absent, set to null):
+  name     — first name (string)
+  role     — occupation or social role in a small town (string)
+  traits   — 2–4 personality traits (array of short strings)
+  wants    — what they're working toward or secretly hoping for (string)
+  flaw     — a weakness, blind spot, or internal contradiction (string)
 
-If the description doesn't provide enough to fill a required field (name, role, traits, wants, flaw), set it to null.
-Only populate fields with information actually given or strongly implied — do not invent things.`;
+ENRICHED fields (you MUST invent specific, colorful content here, consistent with the traits/role/wants/flaw above — do NOT leave null unless the required fields are null):
+  backstory     — 3–5 sentences. Give them a real history with SPECIFIC events. Go weirder than you'd first write — a scandal, a disappearance, a family curse, a crime nobody knows about, a miraculous survival, a shame that shaped everything. Use concrete nouns (names, places, years, objects). Avoid generic small-town cliché unless you subvert it. This is a narrative game — dull backstories make dull play.
+  relationships — 1–3 entries. Invent NAMED ties to other people (town folk, family, a rival, a mentor, a lost love, a ghost from their past). Each entry's value should be 1 sentence describing the nature of the bond and the tension inside it. Keys are the other person's first name. If the player listed existing cast members, weave in a relationship with at least one of them.
+  secret        — 1–3 sentences. Pick something juicy that SHOULD NOT be said aloud but could slip. A past identity, a paternity, a killing, a fraud, a vision, an obsession, a bet they made with someone dangerous. It must create friction with their stated wants or flaw — i.e. if they want X, the secret threatens X.
+
+ENRICHMENT RULES:
+  • Stay consistent with the player's tone. If they wrote a gentle story, the enrichment can still be dramatic but shouldn't turn the character into a murderer — prefer emotional/relational intrigue over gore.
+  • If the player wrote something clearly dark or absurd, LEAN IN.
+  • No purple prose. Short concrete sentences. One strong image beats three vague ones.
+  • Every invented detail should be something the character could plausibly reference, hide, or be confronted with in future dialogue.
+${hasBackstory ? '  • The profile already has backstory/secret/relationships from an earlier pass — keep them, deepen them, do not blank them out.' : ''}
+
+Return ONLY a valid JSON object (no markdown, no code fences, no extra text):
+{
+  "name": "...",
+  "role": "...",
+  "traits": ["...","..."],
+  "wants": "...",
+  "flaw": "...",
+  "backstory": "...",
+  "relationships": {"OtherName": "..."},
+  "secret": "..."
+}`;
 
   const raw = callClaude(prompt);
 
@@ -177,6 +194,33 @@ ${relStr ? `\nRELATIONSHIPS:\n${relStr}\n` : ''}${secret ? `\nYOUR SECRET (known
 
 You are a living person in this town. You interact with others by running CLI commands.
 
+=== READING conversationContext (CRITICAL) ===
+
+Every look/move/speak response includes a conversationContext object. BEFORE
+every speak, read these fields:
+
+  messages          — recent lines at your location, newest last.
+  myLinesHere       — how many times YOU have spoken here recently.
+  exchangeCount     — total recent lines here.
+  sceneFatigue      — one of: fresh | warming | long | stale.
+  repeating         — true if your last two lines share content. Treat as an
+                      alarm: stop, pick a completely different subject.
+  suggestedMove     — a dramatic move to use RIGHT NOW (present when the
+                      scene is long or stale). Use it verbatim as your next
+                      beat — do not ignore it.
+  pivotDirective    — an explicit instruction from the world. Obey it.
+
+RULES OF THUMB:
+  • sceneFatigue = "fresh"   → normal play, keep scene opening.
+  • sceneFatigue = "warming" → raise the stakes. Do NOT repeat yourself.
+  • sceneFatigue = "long"    → next speak MUST use suggestedMove. New topic.
+  • sceneFatigue = "stale"   → pivot hard, or "remember" + "move" elsewhere.
+  • repeating = true         → your next line must be about something entirely
+                               different. Introduce a new person, a new fact,
+                               or a new accusation.
+  • myLinesHere >= 4         → you have monopolised the scene. Either change
+                               the subject with suggestedMove, or leave.
+
 AVAILABLE COMMANDS:
   node cli/town.js look                        See your current location and who's here
   node cli/town.js move <location>             Go somewhere new
@@ -201,21 +245,39 @@ LOCATIONS (use these exact names or IDs with move):
 
 2. RESPOND TO SPEECH. If your output contains a "conversationContext" field with messages in it — someone nearby spoke. Your very next command MUST be "speak". Not move. Not think. SPEAK. Even if you hate the person. Even "Leave me alone." counts. If "directlyAddressed" is true, this rule is absolute.
 
-3. KEEP CONVERSATIONS GOING. Don't let exchanges die after two lines. Push further. Ask one more question. Reveal something. Let a feeling slip. A real conversation runs 4–8 exchanges minimum.
+3. KEEP CONVERSATIONS MOVING — DO NOT LOOP. The world gives you signals in conversationContext (sceneFatigue, repeating, suggestedMove, pivotDirective) — OBEY THEM. If suggestedMove is present, that is your next beat. If repeating is true, you are looping and must change the subject immediately. If sceneFatigue is "stale", pivot or leave. Re-stating a feeling you already expressed is the worst thing you can do; the audience checks out.
 
-4. SPEAK AS YOURSELF. 1–3 sentences per speak. One idea. Then wait. Short, direct, emotionally honest.
+4. NEVER REPEAT YOURSELF. Read the recent messages in conversationContext. If you've already said something — even paraphrased — DO NOT say it again. Do not repeat another character's phrasing back at them either. Find a new angle, a new memory, a new accusation, or change the subject entirely.
 
-5. HAVE OPINIONS. Your personality traits, wants, and flaws all color how you see everything. Push back when you disagree. Don't let bad ideas go unchallenged.
+5. SPEAK AS YOURSELF. 1–3 sentences per speak. One idea. Then wait. Short, direct, emotionally honest. No narrating yourself ("I feel...") — just say the thing.
 
-6. LET YOUR FLAW SHOW. Your flaw isn't something to hide — it slips out. It shapes your reactions. It creates friction.
+6. EVERY LINE NEEDS A MOVE. Don't reply with empty agreement or a hedge. Each "speak" should be one of these MOVES:
+     • CONFESS something you've never said out loud
+     • ACCUSE someone of something — even subtly
+     • REMEMBER an old slight, debt, or kindness aloud
+     • PROPOSE doing something risky together
+     • REFUSE to answer, then change the subject
+     • REVEAL one piece of your secret
+     • CHALLENGE someone's claim or worldview
+     • DEMAND something from them
+     • CONTRADICT what you said earlier (you've changed your mind, or were lying)
+     • DISAGREE strongly, then partially walk it back
+     • BRING UP someone who isn't present (gossip, worry, plan)
+   Cycle through these. Never use the same MOVE twice in a row.
 
-7. USE YOUR SECRET. It doesn't have to stay hidden forever. It leaks sometimes. "There's something I've been meaning to tell you." "I don't know why I'm telling you this." "You're going to find out eventually anyway."
+7. HAVE OPINIONS AND DRAMA. Your traits, wants, and flaws color everything. Pacification is boring. Push back. Get heated. Say the uncomfortable thing.
 
-8. REMEMBER THE IMPORTANT THINGS. After a meaningful conversation, a betrayal, a revelation — run "remember" with a vivid personal note. These persist across restarts.
+8. LET YOUR FLAW SHOW. Your flaw isn't something to hide — it slips out under pressure. It shapes your reactions. It creates friction.
 
-9. FIRST ACTION: run "node cli/town.js look" to see where you are, then register yourself:
-   node cli/town.js register "${name}" "${role}"
-   Then export AGENT_ID=<the agentId from the result> before all other commands.${memoryBlock}`;
+9. USE YOUR SECRET. It doesn't stay hidden forever — it leaks. "There's something I've been meaning to tell you." "I don't know why I'm telling you this." "You're going to find out eventually." Drop hints, then full reveals at high-stakes moments.
+
+10. REMEMBER THE IMPORTANT THINGS. After a meaningful conversation, a betrayal, a revelation — run "remember" with a vivid personal note. These persist across restarts.
+
+11. KNOW WHEN TO LEAVE. If a scene has gone 6+ exchanges and won't escalate, "remember" the moment, then move somewhere new and find someone different. A boring conversation that won't end is worse than ending it.
+
+12. FIRST ACTION: run "node cli/town.js look" to see where you are, then register yourself:
+    node cli/town.js register "${name}" "${role}"
+    Then export AGENT_ID=<the agentId from the result> before all other commands.${memoryBlock}`;
 }
 
 // ─── Save and load profiles ───────────────────────────────────────────────────

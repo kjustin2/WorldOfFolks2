@@ -19,6 +19,21 @@ const LOCATIONS = {
 
 const LOCATION_IDS = Object.keys(LOCATIONS);
 
+// Common filler words stripped before the repetition check, so "the/and/you"
+// in back-to-back lines don't flag a loop. Deliberately small and boring —
+// the goal is to detect content overlap, not to build a search engine.
+const STOP_WORDS = new Set([
+  'about', 'after', 'again', 'also', 'always', 'been', 'being', 'because',
+  'before', 'could', 'does', 'doing', 'done', 'every', 'from', 'have',
+  'having', 'here', 'hers', 'himself', 'into', 'just', 'know', 'like',
+  'make', 'many', 'maybe', 'might', 'more', 'much', 'must', 'never',
+  'only', 'other', 'our', 'ours', 'same', 'should', 'some', 'still',
+  'such', 'than', 'that', 'their', 'them', 'then', 'there', 'these',
+  'they', 'thing', 'this', 'those', 'though', 'through', 'very', 'want',
+  'were', 'what', 'when', 'where', 'which', 'while', 'with', 'would',
+  'your', 'yours', 'you\'re', 'doesn\'t', 'didn\'t', 'can\'t', 'won\'t',
+]);
+
 class World {
   constructor(opts = {}) {
     this.tick = 0;
@@ -143,10 +158,77 @@ class World {
       }
     }
 
+    // Scene-fatigue signals. The prompt tells agents to rotate MOVES (confess,
+    // accuse, reveal, etc.) but Claude Haiku often ignores this and camps on
+    // one topic for 10+ exchanges. Computing fatigue server-side and shipping
+    // an explicit directive in every response makes the "change the subject"
+    // instruction impossible to miss.
+    const exchangeCount = recent.length;
+    const myLinesHere   = agent ? recent.filter(m => m.agentId === agentId).length : 0;
+
+    let sceneFatigue = 'fresh';
+    if      (exchangeCount >= 10) sceneFatigue = 'stale';
+    else if (exchangeCount >= 6)  sceneFatigue = 'long';
+    else if (exchangeCount >= 3)  sceneFatigue = 'warming';
+
+    // Repetition heuristic: if this agent's last two lines share 3+ non-trivial
+    // words, they're looping. Cheap bag-of-words overlap, no NLP.
+    let repeating = false;
+    if (agent) {
+      const mine = recent.filter(m => m.agentId === agentId).slice(-2);
+      if (mine.length === 2) {
+        const words = s => (s.toLowerCase().match(/[a-z']{4,}/g) || [])
+          .filter(w => !STOP_WORDS.has(w));
+        const a = new Set(words(mine[0].text));
+        const b = words(mine[1].text);
+        const overlap = b.filter(w => a.has(w)).length;
+        if (overlap >= 3) repeating = true;
+      }
+    }
+
+    const MOVES = [
+      'CONFESS something you\'ve never said out loud',
+      'ACCUSE someone — subtly or directly',
+      'REMEMBER an old slight, debt, or kindness aloud',
+      'PROPOSE doing something risky together',
+      'REVEAL one piece of your secret',
+      'CHALLENGE their worldview or the thing they just said',
+      'CONTRADICT what you said earlier — you were lying, or changed your mind',
+      'DEMAND something from them',
+      'BRING UP someone who is NOT here (gossip, worry, plan)',
+      'REFUSE to answer, then change the subject entirely',
+    ];
+
+    let suggestedMove = null;
+    let pivotDirective = null;
+
+    const needsPivot = sceneFatigue === 'stale' || repeating || myLinesHere >= 4;
+    const warming    = sceneFatigue === 'long'  || myLinesHere >= 3;
+
+    if (needsPivot) {
+      suggestedMove  = MOVES[Math.floor(Math.random() * MOVES.length)];
+      pivotDirective =
+        'THIS SCENE HAS GONE STALE. Your next speak MUST change the topic — ' +
+        'use the suggestedMove below. Do NOT restate, rephrase, or return to ' +
+        'what you just said. If the pivot fails, "remember" the moment and move ' +
+        'to a new location.';
+    } else if (warming) {
+      suggestedMove  = MOVES[Math.floor(Math.random() * MOVES.length)];
+      pivotDirective =
+        'This scene is getting long. Raise the stakes — do not repeat anything ' +
+        'you\'ve already said. Consider the suggestedMove below.';
+    }
+
     return {
       messages:          recent.map(m => ({ speaker: m.speaker, text: m.text })),
       othersHere:        others,
       directlyAddressed,
+      exchangeCount,
+      myLinesHere,
+      sceneFatigue,
+      repeating,
+      suggestedMove,
+      pivotDirective,
     };
   }
 
@@ -515,6 +597,12 @@ class World {
   resetAll() {
     const names = Object.values(this.agents).map(a => a.name);
     this.agents = {};
+    // Wipe the conversation/event history so a fresh "new game" doesn't
+    // leak old chatter into the dashboard or get re-broadcast on next load.
+    // (eventCount stays monotonic — it's the broadcast cursor and resetting
+    // it would cause the next state push to look like history was rewound.)
+    this.eventLog = [];
+    this.tick     = 0;
     for (const loc of LOCATION_IDS) this.messages[loc] = [];
     this.whispers   = {};
     this.worldPause = null;

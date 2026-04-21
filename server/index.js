@@ -256,17 +256,58 @@ app.post('/api/setup/save', (req, res) => {
   }
 });
 
-// Delete all character files and reset world
+// Helper: nuke every transient file the game writes under characters/. A "new
+// game" needs to wipe profiles AND memories AND prompts AND world_state.json
+// AND .pids — otherwise a re-created character with the same name inherits
+// the prior life's memory file, old chatter rides along in world_state.json,
+// or an orphan PID file confuses the next spawn check.
+function wipeGameFiles() {
+  if (!fs.existsSync(CHARACTERS_DIR)) return;
+
+  // Top-level: profiles + world_state.json + anything else a prior version
+  // happened to leave behind. A wipe means wipe — we don't want to inherit
+  // any file the user didn't explicitly ask for.
+  for (const f of fs.readdirSync(CHARACTERS_DIR)) {
+    const full = path.join(CHARACTERS_DIR, f);
+    try {
+      const stat = fs.statSync(full);
+      if (stat.isFile()) fs.unlinkSync(full);
+    } catch {}
+  }
+
+  // Subdirs: memories/*, prompts/*, .pids/* (any stale pid file from an agent
+  // whose process we failed to kill must go, or the next launch's stuck-check
+  // will see a dead PID as "already running").
+  for (const sub of ['memories', 'prompts', '.pids']) {
+    const subDir = path.join(CHARACTERS_DIR, sub);
+    if (!fs.existsSync(subDir)) continue;
+    for (const f of fs.readdirSync(subDir)) {
+      try { fs.unlinkSync(path.join(subDir, f)); } catch {}
+    }
+  }
+}
+
+// Delete all character files and reset world. Ordering matters:
+//   1. kill agent terminals BEFORE wiping files, so a still-alive agent can't
+//      call /api/register in the middle of the wipe and resurrect itself into
+//      the new world.
+//   2. after the wipe, kill one more time — a Claude subprocess that was in
+//      the middle of a 5-10s LLM call when we first swung the axe may only
+//      return (and then try to call the town CLI) a second or two later.
+//   3. reset in-memory world state + clear our launched-agents bookkeeping so
+//      a fresh /api/game/launch isn't rejected with "already running".
 app.delete('/api/characters', (req, res) => {
   try {
     killAgentTerminals();
-    if (fs.existsSync(CHARACTERS_DIR)) {
-      fs.readdirSync(CHARACTERS_DIR)
-        .filter(f => f.endsWith('.json'))
-        .forEach(f => fs.unlinkSync(path.join(CHARACTERS_DIR, f)));
-    }
+    wipeGameFiles();
+    // Second pass — catches agents whose LLM call was still in flight at kill-1.
+    killAgentTerminals();
     const prevCount = world.eventCount;
     world.resetAll();
+    // Reset launch-state bookkeeping so the next /api/game/launch is allowed.
+    launchedAgentNames = [];
+    agentsLaunched     = false;
+    expectedAIAgents   = [];
     broadcastNewEvents(prevCount);
     broadcast({ type: 'state', state: world.getState() });
     res.json({ success: true });
@@ -315,6 +356,21 @@ function killAgentTerminals() {
         execSync(`taskkill /F /FI "WINDOWTITLE eq ${title}" /T`, { stdio: 'ignore', shell: true });
       } catch {}
     }
+  }
+
+  // 3. Nuclear: find-and-kill any surviving window whose title begins with
+  //    "WorldOfFolks2:" — catches the case where launchedAgentNames is empty
+  //    (e.g. the server restarted since the terminals were spawned, so the
+  //    in-memory name list was lost) or where the PID file was cleaned up but
+  //    the process didn't actually die. Uses PowerShell because taskkill's
+  //    /FI "WINDOWTITLE eq ..." filter doesn't support wildcards.
+  if (isWin) {
+    try {
+      execSync(
+        'powershell -NoProfile -Command "Get-Process | Where-Object { $_.MainWindowTitle -like \'WorldOfFolks2:*\' } | Stop-Process -Force -ErrorAction SilentlyContinue"',
+        { stdio: 'ignore', timeout: 5000 },
+      );
+    } catch {}
   }
 
   launchedAgentNames = [];

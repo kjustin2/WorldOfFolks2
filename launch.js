@@ -8,6 +8,11 @@ const { spawn, spawnSync } = require('child_process');
 const http  = require('http');
 const fs    = require('fs');
 const path  = require('path');
+// Rebuild the character prompt at launch time so updates to the prompt
+// template (and any new memories) take effect for already-saved profiles
+// — otherwise we'd be stuck with whatever generatedPrompt was baked at
+// character-creation time.
+const { buildAgentPrompt } = require('./server/creator');
 
 const BASE_URL       = process.env.TOWN_URL || 'http://localhost:3000';
 const CHARACTERS_DIR = path.join(__dirname, 'characters');
@@ -51,9 +56,11 @@ function launchAgent(profile) {
   const safeId   = profile.name.toLowerCase().replace(/\s+/g, '_');
   const promptFile = path.join(PROMPTS_DIR, `${safeId}.txt`);
 
-  // Build the full prompt: base prompt + operating instructions
+  // Build the full prompt: base prompt (regenerated from current template +
+  // any new memories) + operating instructions.
   const cliPath    = path.join(__dirname, 'cli', 'town.js').replace(/\\/g, '/');
-  const agentPrompt = (profile.generatedPrompt || '') + `
+  const basePrompt = buildAgentPrompt(profile);
+  const agentPrompt = basePrompt + `
 
 === OPERATING INSTRUCTIONS ===
 
@@ -80,15 +87,21 @@ IRON LAW:
 - After EVERY command, read the output.
 - If output contains "conversationContext" with any messages — your NEXT command MUST be "speak".
 - If "directlyAddressed" is true — respond IMMEDIATELY. No exceptions.
-- Keep speaking for 4–8 exchanges minimum. Don't let conversations die early.
 - After each meaningful exchange, run: node "${cliPath}" remember "<what happened and how you feel>"
 
-STAY PUT:
+ANTI-LOOP RULES (this is the most important section):
+- BEFORE every "speak", scan the recent messages in conversationContext. If you've already said something with the same theme, DO NOT REPEAT IT. Pick a new MOVE from the character prompt list (CONFESS, ACCUSE, REVEAL, CHALLENGE, etc.).
+- A scene has THREE PHASES: open (1-2 lines) → escalate (raise stakes, reveal something) → resolve or pivot (3rd-4th line). Don't camp the open phase forever.
+- After 3 exchanges on the same subject, the very next "speak" MUST change the subject. Use a hard pivot: "Forget that — I have to tell you something." or call out a different person, or bring up someone who isn't there.
+- After 6 exchanges total in one scene, if it's not escalating, "remember" the moment then "move" to a different location and find someone new to talk to.
+- Boring is the only failure mode. If your last 2 lines could've been said by anyone, STOP and pick a sharper MOVE.
+
+STAY PUT (until the scene runs its course):
 - Most actions should be "speak", "think", or "remember" — NOT "move".
-- Wait at least 5–6 actions between moves. A character who hops around can never be talked to.
-- NEVER move while a conversation is active. If someone is talking to you or near you, stay.
-- Only move when: (a) you are alone AND have nothing to think/remember, or (b) you have a specific, in-character reason to go somewhere (e.g. "I need to find Ruth" — then head there and STOP).
-- If "move" returns an error like "someone is waiting to speak with you" — you MUST stay. Do NOT retry the move. Instead "look" or "speak" or "think".
+- NEVER move while someone is mid-sentence. If someone just spoke, your next action is "speak".
+- Don't move during the first 4-5 actions of a scene. Let the drama develop.
+- Only move when: (a) the scene has resolved or stalled past saving, or (b) you have a specific, in-character reason — chase someone, escape someone, find a specific person.
+- If "move" returns an error like "someone is waiting to speak with you" — you MUST stay. Do NOT retry the move.
 - After arriving at a new location, run "look", then "speak" or "think" BEFORE you even consider moving again.
 `;
 

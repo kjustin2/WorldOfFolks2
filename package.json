@@ -7,7 +7,7 @@
     "start": "node server/index.js",
     "launch": "node launch.js",
     "play": "node game.js",
-    "test": "node tests/event-broadcast.test.js && node tests/agent-health.test.js"
+    "test": "node tests/event-broadcast.test.js && node tests/agent-health.test.js && node tests/reset-and-prompt.test.js"
   },
   "dependencies": {
     "express": "^4.21.0",
